@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  db:
+    container_name: db
+    build:
+      context: .
+      dockerfile: ./db/Dockerfile
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      TZ: 'Asia/Tokyo'
+    # command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - pgsql-data:/var/lib/pgsql
+      - ./db/batch:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
+
+volumes:
+  pgsql-data:
+    driver: local
