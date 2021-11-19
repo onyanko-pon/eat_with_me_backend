@@ -58,4 +58,42 @@ func (r EventRepository) UpdateEvent(ctx context.Context, event entity.Event) (*
 	return &event, nil
 }
 
+func (r EventRepository) GetJoiningEvents(ctx context.Context, userID uint64) ([]entity.Event, error) {
+	query := "SELECT * FROM events WHERE id IN (SELECT event_id FROM event_users WHERE user_id = $1)"
+
+	rows, err := r.sqlHandler.QueryContext(ctx, query, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var events []entity.Event
+
+	for rows.Next() {
+		var event entity.Event
+		err = rows.Scan(&event.ID, &event.Title, &event.Description, &event.Latitude, &event.Longitude, &event.OrganizeUserID, &event.StateDatetime, &event.EndDatetime)
+		events = append(events, event)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return events, nil
+}
+
+func (r EventRepository) JoinEvent(ctx context.Context, eventID uint64, userID uint64) (*entity.Event, error) {
+	query := "INSERT INTO event_users (event_id, user_id) VALUES ($1, $2)"
+
+	_, err := r.sqlHandler.QueryContext(ctx, query, eventID, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	event, err := r.GetEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // 参加者のエンドポイント

@@ -42,6 +42,9 @@ func main() {
 	e.PUT("/api/events", eventHandler.UpdateEvent)
 	e.GET("/api/events/:id", eventHandler.GetEvent)
 
+	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents)
+	e.POST("/api/events/:id/join", eventHandler.JoinEvent)
+
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),
 	)

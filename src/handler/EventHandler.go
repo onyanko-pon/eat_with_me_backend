@@ -70,3 +70,42 @@ func (h EventHandler) UpdateEvent(c echo.Context) error {
 		Event: event,
 	})
 }
+
+type responseGetJoiningEvents struct {
+	Events []entity.Event `json:"events"`
+}
+
+func (h EventHandler) GetJoiningEvents(c echo.Context) error {
+
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+	events, _ := h.EventRepository.GetJoiningEvents(c.Request().Context(), uint64(id))
+
+	return c.JSON(http.StatusOK, responseGetJoiningEvents{
+		Events: events,
+	})
+}
+
+type responseJoinEvent struct {
+	Event *entity.Event `json:"event"`
+}
+
+type requestJoinEventBody struct {
+	UserID uint64 `json:"user_id"`
+}
+
+func (h EventHandler) JoinEvent(c echo.Context) error {
+
+	requestBody := new(requestJoinEventBody)
+	if err := c.Bind(requestBody); err != nil {
+		return err
+	}
+
+	idStr := c.Param("id")
+	eventID, _ := strconv.Atoi(idStr)
+	event, _ := h.EventRepository.JoinEvent(c.Request().Context(), uint64(eventID), requestBody.UserID)
+
+	return c.JSON(http.StatusOK, responseJoinEvent{
+		Event: event,
+	})
+}
