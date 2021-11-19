@@ -2,7 +2,10 @@ module github.com/onyanko-pon/eat_with_me_backend
 
 go 1.17
 
-require github.com/labstack/echo/v4 v4.6.1
+require (
+	github.com/labstack/echo/v4 v4.6.1
+	github.com/lib/pq v1.10.4
+)
 
 require (
 	github.com/labstack/gommon v0.3.0 // indirect
