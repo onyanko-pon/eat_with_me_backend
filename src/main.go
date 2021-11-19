@@ -14,7 +14,19 @@ import (
 func main() {
 	e := echo.New()
 
-	dataSource := "host=127.0.0.1 port=5432 user=admin password=password dbname=mydb sslmode=disable"
+	var dataSource string
+	if os.Getenv("GO_ENV") == "production" {
+		dataSource = fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			os.Getenv("DB_HOST"),
+			os.Getenv("DB_PORT"),
+			os.Getenv("DB_USER"),
+			os.Getenv("DB_PASSWORD"),
+			os.Getenv("DB_NAME"),
+		)
+	} else {
+		dataSource = "host=127.0.0.1 port=5432 user=admin password=password dbname=mydb sslmode=disable"
+	}
 	sqlHandler, err := sql_handler.NewHandler(dataSource)
 
 	if err != nil {
