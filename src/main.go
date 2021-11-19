@@ -24,6 +24,7 @@ func main() {
 			os.Getenv("DB_PASSWORD"),
 			os.Getenv("DB_NAME"),
 		)
+		fmt.Println(dataSource)
 	} else {
 		dataSource = "host=127.0.0.1 port=5432 user=admin password=password dbname=mydb sslmode=disable"
 	}
