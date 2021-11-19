@@ -7,4 +7,4 @@ CREATE TABLE events (
   organize_user_id INT NOT NULL REFERENCES users(id),
   start_datetime TIMESTAMP,
   end_datetime TIMESTAMP
-)
+);
