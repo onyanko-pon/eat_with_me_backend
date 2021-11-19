@@ -5,7 +5,7 @@
 $ air
 ```
 
-リリースコマンd
+リリースコマンド
 ```
 $ heroku container:push web
 $ heroku container:release web
