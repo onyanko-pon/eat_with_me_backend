@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4"
+	"github.com/onyanko-pon/eat_with_me_backend/src/handler"
 )
 
 func main() {
@@ -15,5 +16,13 @@ func main() {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))))
+	userHandler, _ := handler.NewUserHandler()
+
+	e.GET("/api/users/:id/friends", userHandler.GetFriends)
+
+	fmt.Println(os.Environ())
+
+	e.Logger.Fatal(
+		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),
+	)
 }

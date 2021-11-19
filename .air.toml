@@ -4,13 +4,13 @@ tmp_dir = "out"
 [build]
   cmd = "go build -o ./out/main ./src/main.go"
   bin = "out/main"
+  full_bin = "PORT=8080 ./out/main"
   delay = 1000
   exclude_dir = ["assets", "out", "vendor"]
   exclude_file = []
   exclude_regex = []
   exclude_unchanged = false
   follow_symlink = false
-  full_bin = ""
   include_dir = []
   include_ext = ["go", "tpl", "tmpl", "html"]
   kill_delay = "0s"

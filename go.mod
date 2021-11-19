@@ -1,4 +1,4 @@
-module github.com/onyanko-pon/morning_compe_server
+module github.com/onyanko-pon/eat_with_me_backend
 
 go 1.17
 
