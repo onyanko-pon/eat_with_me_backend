@@ -7,5 +7,6 @@ build:
     web: ./Dockerfile
   config:
     GO_ENV: production
-run:
-  web: /app/main
+
+# run:
+  # web: /main

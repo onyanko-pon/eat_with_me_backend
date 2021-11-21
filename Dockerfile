@@ -19,6 +19,6 @@ RUN go build \
 
 FROM alpine:3.12 as runner
 
-COPY --from=builder /go/bin/main /app/main
+COPY --from=builder /go/bin/main /main
 
-CMD ["/app/main"]
+CMD /main

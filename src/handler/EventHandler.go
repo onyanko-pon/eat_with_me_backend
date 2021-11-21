@@ -35,21 +35,25 @@ func (h EventHandler) GetEvent(c echo.Context) error {
 	})
 }
 
+type requestCreateEventBody struct {
+	Event *entity.Event `json:"event"`
+}
+
 type responseCreateEvent struct {
 	Event *entity.Event `json:"event"`
 }
 
 func (h EventHandler) CreateEvent(c echo.Context) error {
 
-	event := new(entity.Event)
-	if err := c.Bind(event); err != nil {
+	requestBody := new(requestCreateEventBody)
+	if err := c.Bind(requestBody); err != nil {
 		return err
 	}
 
-	h.EventRepository.CreateEvent(c.Request().Context(), *event)
+	h.EventRepository.CreateEvent(c.Request().Context(), *requestBody.Event)
 
 	return c.JSON(http.StatusOK, responseCreateEvent{
-		Event: event,
+		Event: requestBody.Event,
 	})
 }
 
