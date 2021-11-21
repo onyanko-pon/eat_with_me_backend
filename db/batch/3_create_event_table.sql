@@ -5,6 +5,6 @@ CREATE TABLE events (
   latitude    DECIMAL NOT NULL,
   longitude   DECIMAL NOT NULL,
   organize_user_id INT NOT NULL REFERENCES users(id),
-  start_datetime TIMESTAMP,
-  end_datetime TIMESTAMP
+  start_datetime timestamp with time zone,
+  end_datetime timestamp with time zone
 );

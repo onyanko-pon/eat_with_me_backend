@@ -11,4 +11,6 @@ type Event struct {
 	OrganizeUserID uint64    `json:"organize_user_id"`
 	StateDatetime  time.Time `json:"start_datetime"`
 	EndDatetime    time.Time `json:"end_datetime"`
+	OrganizeUser   User      `json:"organize_user"`
+	JoinUsers      []User    `json:"join_users"`
 }

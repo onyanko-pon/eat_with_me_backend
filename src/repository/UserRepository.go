@@ -78,3 +78,28 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 	}
 	return users, nil
 }
+
+func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]entity.User, error) {
+	query := "SELECT * FROM users WHERE users.id in (select event_users.user_id from event_users where event_users.event_id = $1)"
+
+	rows, err := u.sqlHandler.QueryContext(ctx, query, eventID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var users []entity.User
+	for rows.Next() {
+		var user entity.User
+		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL)
+		users = append(users, user)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(users) == 0 {
+		return []entity.User{}, nil
+	}
+	return users, nil
+}
