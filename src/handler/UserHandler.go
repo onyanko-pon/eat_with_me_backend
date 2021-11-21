@@ -10,12 +10,14 @@ import (
 )
 
 type UserHandler struct {
-	UserRepository *repository.UserRepository
+	UserRepository  *repository.UserRepository
+	EventRepository *repository.EventRepository
 }
 
-func NewUserHandler(userRepository *repository.UserRepository) (*UserHandler, error) {
+func NewUserHandler(userRepository *repository.UserRepository, eventRepository *repository.EventRepository) (*UserHandler, error) {
 	return &UserHandler{
-		UserRepository: userRepository,
+		UserRepository:  userRepository,
+		EventRepository: eventRepository,
 	}, nil
 }
 
@@ -84,5 +86,24 @@ func (u UserHandler) GetFriends(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, responseGetFriends{
 		Friends: friends,
+	})
+}
+
+type responseGetEvents struct {
+	User   *entity.User   `json:"user"`
+	Events []entity.Event `json:"events"`
+}
+
+func (h UserHandler) GetEvents(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	user, _ := h.UserRepository.GetUser(c.Request().Context(), uint64(id))
+
+	events, _ := h.EventRepository.GetEventsRelatedToUser(c.Request().Context(), *user)
+
+	return c.JSON(http.StatusOK, responseGetEvents{
+		Events: events,
+		User:   user,
 	})
 }

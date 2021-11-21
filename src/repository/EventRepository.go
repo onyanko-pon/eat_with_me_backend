@@ -123,4 +123,33 @@ func (r EventRepository) JoinEvent(ctx context.Context, eventID uint64, userID u
 	return event, nil
 }
 
-// 参加者のエンドポイント
+func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity.User) ([]entity.Event, error) {
+	query := `SELECT * FROM events LEFT
+							JOIN users as organize_user ON organize_user.id = events.organize_user_id
+							WHERE events.organize_user_id IN (SELECT friend_user_id FROM friends WHERE friends.user_id = $1) OR events.organize_user_id = $1`
+
+	rows, err := r.sqlHandler.QueryContext(ctx, query, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var events = []entity.Event{}
+	for rows.Next() {
+		var event entity.Event
+		var organize_user entity.User
+		err = rows.Scan(
+			&event.ID, &event.Title, &event.Description, &event.Latitude, &event.Longitude, &event.OrganizeUserID, &event.StateDatetime, &event.EndDatetime,
+			&organize_user.ID, &organize_user.Username, &organize_user.ImageURL,
+		)
+		event.OrganizeUser = organize_user
+
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO 現状 N+1になってしまうので取得していない
+		event.JoinUsers = make([]entity.User, 0)
+	}
+
+	return events, nil
+}

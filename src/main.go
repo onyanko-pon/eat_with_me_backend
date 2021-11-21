@@ -36,25 +36,26 @@ func main() {
 	}
 
 	userRepository := repository.NewUserRepository(sqlHandler)
+	eventRepository := repository.NewEventRepository(sqlHandler)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	userHandler, _ := handler.NewUserHandler(userRepository)
+	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository)
 
 	e.GET("/api/users/:id/friends", userHandler.GetFriends)
 	e.POST("/api/users", userHandler.CreateUser)
 	e.PUT("/api/users", userHandler.UpdateUser)
 	e.GET("/api/users/:id", userHandler.GetUser)
 
-	eventRepository := repository.NewEventRepository(sqlHandler)
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
 
 	e.POST("/api/events", eventHandler.CreateEvent)
 	e.PUT("/api/events", eventHandler.UpdateEvent)
 	e.GET("/api/events/:id", eventHandler.GetEvent)
 
+	e.GET("/api/users/:id/events", userHandler.GetEvents)
 	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents)
 	e.POST("/api/events/:id/join", eventHandler.JoinEvent)
 
