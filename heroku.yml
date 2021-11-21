@@ -8,4 +8,4 @@ build:
   config:
     GO_ENV: production
 run:
-  web: go run /app/src/main.go
+  web: /app/main

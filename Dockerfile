@@ -17,7 +17,7 @@ RUN go build \
   -o /go/bin/main
 
 
-FROM scratch as runner
+FROM alpine:3.12 as runner
 
 COPY --from=builder /go/bin/main /app/main
 
