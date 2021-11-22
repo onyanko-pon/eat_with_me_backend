@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/onyanko-pon/eat_with_me_backend/src/entity"
 	"github.com/onyanko-pon/eat_with_me_backend/src/sql_handler"
@@ -126,9 +127,10 @@ func (r EventRepository) JoinEvent(ctx context.Context, eventID uint64, userID u
 func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity.User) ([]entity.Event, error) {
 	query := `SELECT * FROM events LEFT
 							JOIN users as organize_user ON organize_user.id = events.organize_user_id
-							WHERE events.organize_user_id IN (SELECT friend_user_id FROM friends WHERE friends.user_id = $1) OR events.organize_user_id = $1`
+							WHERE events.organize_user_id IN (SELECT friend_user_id FROM friends WHERE friends.user_id = $1) OR events.organize_user_id = $2`
 
-	rows, err := r.sqlHandler.QueryContext(ctx, query, user.ID)
+	fmt.Println(user)
+	rows, err := r.sqlHandler.QueryContext(ctx, query, user.ID, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +151,11 @@ func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity
 
 		// TODO 現状 N+1になってしまうので取得していない
 		event.JoinUsers = make([]entity.User, 0)
+		events = append(events, event)
+	}
+
+	if len(events) == 0 {
+		return make([]entity.Event, 0), nil
 	}
 
 	return events, nil
