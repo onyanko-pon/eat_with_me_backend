@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -48,8 +49,11 @@ func (u UserHandler) CreateUser(c echo.Context) error {
 		return err
 	}
 
-	u.UserRepository.CreateUser(c.Request().Context(), *user)
+	_, err := u.UserRepository.CreateUser(c.Request().Context(), *user)
 
+	if err != nil {
+		return err
+	}
 	return c.JSON(http.StatusOK, responseCreateUser{
 		User: user,
 	})
@@ -66,7 +70,11 @@ func (u UserHandler) UpdateUser(c echo.Context) error {
 		return err
 	}
 
-	u.UserRepository.UpdateUser(c.Request().Context(), *user)
+	_, err := u.UserRepository.UpdateUser(c.Request().Context(), *user)
+
+	if err != nil {
+		return err
+	}
 
 	return c.JSON(http.StatusOK, responseUpdateUser{
 		User: user,
@@ -82,7 +90,10 @@ func (u UserHandler) GetFriends(c echo.Context) error {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
-	friends, _ := u.UserRepository.GetFriends(c.Request().Context(), uint64(id))
+	friends, err := u.UserRepository.GetFriends(c.Request().Context(), uint64(id))
+	if err != nil {
+		return err
+	}
 
 	return c.JSON(http.StatusOK, responseGetFriends{
 		Friends: friends,
@@ -98,9 +109,19 @@ func (h UserHandler) GetEvents(c echo.Context) error {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
-	user, _ := h.UserRepository.GetUser(c.Request().Context(), uint64(id))
+	user, err := h.UserRepository.GetUser(c.Request().Context(), uint64(id))
 
-	events, _ := h.EventRepository.GetEventsRelatedToUser(c.Request().Context(), *user)
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
+
+	events, err := h.EventRepository.GetEventsRelatedToUser(c.Request().Context(), *user)
+
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
 
 	return c.JSON(http.StatusOK, responseGetEvents{
 		Events: events,
