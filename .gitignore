@@ -1,2 +1,4 @@
 .env
 out
+images
+.DS_Store

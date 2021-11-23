@@ -21,7 +21,7 @@ $ psql -h localhost -p 5432 -U admin -d mydb
 
 本番DBの接続
 ```
-$heroku pg:psql
+$ heroku pg:psql
 ```
 
 ログの出力

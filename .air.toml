@@ -4,7 +4,7 @@ tmp_dir = "out"
 [build]
   cmd = "go build -o ./out/main ./src/main.go"
   bin = "out/main"
-  full_bin = "PORT=8080 ./out/main"
+  full_bin = "source .env && ./out/main"
   delay = 1000
   exclude_dir = ["assets", "out", "vendor"]
   exclude_file = []

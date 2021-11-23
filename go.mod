@@ -3,11 +3,15 @@ module github.com/onyanko-pon/eat_with_me_backend
 go 1.17
 
 require (
+	github.com/aws/aws-sdk-go v1.42.10
+	github.com/joho/godotenv v1.4.0
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/lib/pq v1.10.4
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 )
 
 require (
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

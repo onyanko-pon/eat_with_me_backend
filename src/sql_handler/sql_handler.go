@@ -23,7 +23,7 @@ func NewHandler(dataSource string) (*SQLHandler, error) {
 
 	ctx := context.Background()
 	// TODO タイムアウト時間を定数化
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	err = db.PingContext(ctx)
 	if err != nil {
@@ -35,7 +35,7 @@ func NewHandler(dataSource string) (*SQLHandler, error) {
 
 func (h *SQLHandler) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
 	log.Printf("[sql handler] QueryContext, query: %s, args: %v", strings.ReplaceAll(query, "\n", " "), args)
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	return h.db.QueryContext(ctx, query, args...)
 }
