@@ -138,6 +138,7 @@ func (h UserHandler) GetEvents(c echo.Context) error {
 func (h UserHandler) UploadUserIcon(c echo.Context) error {
 
 	userIDStr := c.Param("id")
+	userID, _ := strconv.Atoi(userIDStr)
 
 	file, err := c.FormFile("usericon")
 	if err != nil {
@@ -156,6 +157,18 @@ func (h UserHandler) UploadUserIcon(c echo.Context) error {
 	d, _ := image.Resize(data, filename)
 
 	url, err := h.FileService.UploadUserIcon(d, filename)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	user, err := h.UserRepository.GetUser(c.Request().Context(), uint64(userID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	user.ImageURL = url
+	user, err = h.UserRepository.UpdateUser(c.Request().Context(), *user)
 	if err != nil {
 		fmt.Println(err)
 		return err
