@@ -3,22 +3,28 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/onyanko-pon/eat_with_me_backend/src/entity"
+	"github.com/onyanko-pon/eat_with_me_backend/src/image"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
+	"github.com/onyanko-pon/eat_with_me_backend/src/service"
 )
 
 type UserHandler struct {
 	UserRepository  *repository.UserRepository
 	EventRepository *repository.EventRepository
+	FileService     *service.FileService
 }
 
 func NewUserHandler(userRepository *repository.UserRepository, eventRepository *repository.EventRepository) (*UserHandler, error) {
+	fileService, _ := service.NewFileService()
 	return &UserHandler{
 		UserRepository:  userRepository,
 		EventRepository: eventRepository,
+		FileService:     fileService,
 	}, nil
 }
 
@@ -126,5 +132,37 @@ func (h UserHandler) GetEvents(c echo.Context) error {
 	return c.JSON(http.StatusOK, responseGetEvents{
 		Events: events,
 		User:   user,
+	})
+}
+
+func (h UserHandler) UploadUserIcon(c echo.Context) error {
+
+	userIDStr := c.Param("id")
+
+	file, err := c.FormFile("usericon")
+	if err != nil {
+		return err
+	}
+
+	data, err := file.Open()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	extension := filepath.Ext(file.Filename)
+	filename := "username" + userIDStr + extension
+
+	d, _ := image.Resize(data, filename)
+
+	url, err := h.FileService.UploadUserIcon(d, filename)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"filename": file.Filename,
+		"url":      url,
 	})
 }

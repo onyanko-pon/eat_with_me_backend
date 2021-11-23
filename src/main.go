@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/onyanko-pon/eat_with_me_backend/src/handler"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
@@ -12,6 +13,11 @@ import (
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+	}
+
 	e := echo.New()
 
 	var dataSource string
@@ -58,6 +64,8 @@ func main() {
 	e.GET("/api/users/:id/events", userHandler.GetEvents)
 	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents)
 	e.POST("/api/events/:id/join", eventHandler.JoinEvent)
+
+	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon)
 
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),
