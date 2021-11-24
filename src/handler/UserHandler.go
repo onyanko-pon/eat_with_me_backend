@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -46,19 +48,34 @@ func (u UserHandler) GetUser(c echo.Context) error {
 	})
 }
 
+func (u UserHandler) FetchUserByUsername(c echo.Context) error {
+
+	username := c.Param("username")
+
+	user, _ := u.UserRepository.FetchUserByUsername(c.Request().Context(), username)
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"user": user,
+	})
+}
+
 type responseCreateUser struct {
 	User  *entity.User `json:"user"`
 	Token string       `json:"token"`
 }
 
+type requestBodyCreateUser struct {
+	User *entity.User `json:"user"`
+}
+
 func (u UserHandler) CreateUser(c echo.Context) error {
 
-	user := new(entity.User)
-	if err := c.Bind(user); err != nil {
+	requestBody := new(requestBodyCreateUser)
+	if err := c.Bind(requestBody); err != nil {
 		return err
 	}
 
-	user, err := u.UserRepository.CreateUser(c.Request().Context(), *user)
+	user, err := u.UserRepository.CreateUser(c.Request().Context(), *requestBody.User)
 
 	if err != nil {
 		return err
@@ -197,4 +214,42 @@ func (u UserHandler) Restricted(c echo.Context) error {
 	authUser, _ := claims.GenAuthUser()
 
 	return c.String(http.StatusOK, "Welcome "+authUser.UserID)
+}
+
+func (u UserHandler) GenToken(c echo.Context) error {
+
+	if os.Getenv("GO_ENV") == "production" {
+		return c.JSON(http.StatusUnauthorized, echo.Map{
+			"message": "good bye",
+		})
+	}
+
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	user, _ := u.UserRepository.GetUser(c.Request().Context(), uint64(id))
+	authUser := &auth.AuthUser{
+		UserID: idStr,
+	}
+	token, _ := authUser.GenToken()
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"user":  user,
+		"token": token,
+	})
+}
+
+func (u UserHandler) ApplyFriend(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	friendUserIDStr := c.Param("friend_user_id")
+	friendUserID, _ := strconv.Atoi(friendUserIDStr)
+
+	err := u.UserRepository.ApplyFriend(context.Background(), uint64(id), uint64(friendUserID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return c.NoContent(http.StatusCreated)
 }
