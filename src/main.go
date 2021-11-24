@@ -7,6 +7,8 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
 	"github.com/onyanko-pon/eat_with_me_backend/src/handler"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
 	"github.com/onyanko-pon/eat_with_me_backend/src/sql_handler"
@@ -41,6 +43,17 @@ func main() {
 		panic(1)
 	}
 
+	config := middleware.JWTConfig{
+		ContextKey:    "token",
+		SigningMethod: "HS256",
+		TokenLookup:   "header:" + echo.HeaderAuthorization,
+		AuthScheme:    "Bearer",
+		Claims:        &auth.JWTClaim{},
+		SigningKey:    []byte(os.Getenv("JWT_SIGNINGKEY")),
+	}
+
+	jwtMiddleware := middleware.JWTWithConfig(config)
+
 	userRepository := repository.NewUserRepository(sqlHandler)
 	eventRepository := repository.NewEventRepository(sqlHandler)
 
@@ -49,24 +62,24 @@ func main() {
 	})
 
 	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository)
-
-	e.GET("/api/users/:id/friends", userHandler.GetFriends)
-	e.POST("/api/users", userHandler.CreateUser)
-	e.PUT("/api/users", userHandler.UpdateUser)
-	e.GET("/api/users/:id", userHandler.GetUser)
-
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
 
-	e.POST("/api/events", eventHandler.CreateEvent)
-	e.PUT("/api/events", eventHandler.UpdateEvent)
-	e.GET("/api/events/:id", eventHandler.GetEvent)
+	e.GET("/api/users/:id/friends", userHandler.GetFriends, jwtMiddleware)
+	e.POST("/api/users", userHandler.CreateUser)
+	e.PUT("/api/users", userHandler.UpdateUser, jwtMiddleware)
+	e.GET("/api/users/:id", userHandler.GetUser, jwtMiddleware)
 
-	e.GET("/api/users/:id/events", userHandler.GetEvents)
-	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents)
-	e.POST("/api/events/:id/join", eventHandler.JoinEvent)
+	e.POST("/api/events", eventHandler.CreateEvent, jwtMiddleware)
+	e.PUT("/api/events", eventHandler.UpdateEvent, jwtMiddleware)
+	e.GET("/api/events/:id", eventHandler.GetEvent, jwtMiddleware)
 
-	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon)
+	e.GET("/api/users/:id/events", userHandler.GetEvents, jwtMiddleware)
+	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents, jwtMiddleware)
+	e.POST("/api/events/:id/join", eventHandler.JoinEvent, jwtMiddleware)
 
+	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon, jwtMiddleware)
+
+	e.GET("/api/restricted", userHandler.Restricted, jwtMiddleware)
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),
 	)

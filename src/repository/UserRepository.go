@@ -35,15 +35,20 @@ func (u UserRepository) GetUser(ctx context.Context, userID uint64) (*entity.Use
 }
 
 func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*entity.User, error) {
-	query := `INSERT INTO users (username, image_url) VALUES ($1, $2)`
+	query := `INSERT INTO users (username, image_url) VALUES ($1, $2) RETURNING id`
 
-	_, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL)
+	rows, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL)
+
+	var userID uint64
+	rows.Scan(&userID)
+
+	newUser, _ := u.GetUser(ctx, userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	return newUser, nil
 }
 
 func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*entity.User, error) {
@@ -54,8 +59,9 @@ func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*enti
 	if err != nil {
 		return nil, err
 	}
+	newUser, _ := u.GetUser(ctx, user.ID)
 
-	return nil, nil
+	return newUser, nil
 }
 
 func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity.User, error) {
