@@ -51,14 +51,18 @@ type responseCreateUser struct {
 	Token string       `json:"token"`
 }
 
+type requestBodyCreateUser struct {
+	User *entity.User `json:"user"`
+}
+
 func (u UserHandler) CreateUser(c echo.Context) error {
 
-	user := new(entity.User)
-	if err := c.Bind(user); err != nil {
+	requestBody := new(requestBodyCreateUser)
+	if err := c.Bind(requestBody); err != nil {
 		return err
 	}
 
-	user, err := u.UserRepository.CreateUser(c.Request().Context(), *user)
+	user, err := u.UserRepository.CreateUser(c.Request().Context(), *requestBody.User)
 
 	if err != nil {
 		return err
