@@ -34,6 +34,23 @@ func (u UserRepository) GetUser(ctx context.Context, userID uint64) (*entity.Use
 	return &user, nil
 }
 
+func (u UserRepository) FetchUserByUsername(ctx context.Context, username string) (*entity.User, error) {
+	query := `SELECT * FROM users WHERE username = $1`
+
+	rows, err := u.sqlHandler.QueryContext(ctx, query, username)
+	if err != nil {
+		return nil, err
+	}
+	var user entity.User
+	rows.Next()
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*entity.User, error) {
 	query := `INSERT INTO users (username, image_url) VALUES ($1, $2) RETURNING id`
 
@@ -66,7 +83,7 @@ func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*enti
 }
 
 func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity.User, error) {
-	query := "SELECT * FROM users WHERE id IN (SELECT friend_user_id FROM friends WHERE user_id = $1)"
+	query := "SELECT * FROM users WHERE id IN (SELECT friend_user_id FROM friends WHERE user_id = $1 and friends.status = 'accepted')"
 
 	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
 
@@ -109,4 +126,11 @@ func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]
 		return []entity.User{}, nil
 	}
 	return users, nil
+}
+
+func (u UserRepository) ApplyFriend(ctx context.Context, userID uint64, friendUserID uint64) error {
+	query := "INSERT INTO friends (user_id, friend_user_id, status) VALUES ($1, $2, 'applying')"
+
+	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
+	return err
 }
