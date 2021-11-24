@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
+	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
 	"github.com/onyanko-pon/eat_with_me_backend/src/entity"
 	"github.com/onyanko-pon/eat_with_me_backend/src/image"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
@@ -45,7 +47,8 @@ func (u UserHandler) GetUser(c echo.Context) error {
 }
 
 type responseCreateUser struct {
-	User *entity.User `json:"user"`
+	User  *entity.User `json:"user"`
+	Token string       `json:"token"`
 }
 
 func (u UserHandler) CreateUser(c echo.Context) error {
@@ -55,13 +58,20 @@ func (u UserHandler) CreateUser(c echo.Context) error {
 		return err
 	}
 
-	_, err := u.UserRepository.CreateUser(c.Request().Context(), *user)
+	user, err := u.UserRepository.CreateUser(c.Request().Context(), *user)
 
 	if err != nil {
 		return err
 	}
+
+	authUser := &auth.AuthUser{
+		UserID: strconv.Itoa(int(user.ID)),
+	}
+	token, _ := authUser.GenToken()
+
 	return c.JSON(http.StatusOK, responseCreateUser{
-		User: user,
+		User:  user,
+		Token: token,
 	})
 }
 
@@ -178,4 +188,13 @@ func (h UserHandler) UploadUserIcon(c echo.Context) error {
 		"filename": file.Filename,
 		"url":      url,
 	})
+}
+
+func (u UserHandler) Restricted(c echo.Context) error {
+	token := c.Get("token").(*jwt.Token)
+	fmt.Println(token)
+	claims := token.Claims.(*auth.JWTClaim)
+	authUser, _ := claims.GenAuthUser()
+
+	return c.String(http.StatusOK, "Welcome "+authUser.UserID)
 }

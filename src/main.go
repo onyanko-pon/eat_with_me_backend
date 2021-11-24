@@ -7,6 +7,8 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
 	"github.com/onyanko-pon/eat_with_me_backend/src/handler"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
 	"github.com/onyanko-pon/eat_with_me_backend/src/sql_handler"
@@ -49,13 +51,12 @@ func main() {
 	})
 
 	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository)
+	eventHandler, _ := handler.NewEventHandler(eventRepository)
 
 	e.GET("/api/users/:id/friends", userHandler.GetFriends)
 	e.POST("/api/users", userHandler.CreateUser)
 	e.PUT("/api/users", userHandler.UpdateUser)
 	e.GET("/api/users/:id", userHandler.GetUser)
-
-	eventHandler, _ := handler.NewEventHandler(eventRepository)
 
 	e.POST("/api/events", eventHandler.CreateEvent)
 	e.PUT("/api/events", eventHandler.UpdateEvent)
@@ -66,6 +67,19 @@ func main() {
 	e.POST("/api/events/:id/join", eventHandler.JoinEvent)
 
 	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon)
+
+	config := middleware.JWTConfig{
+		ContextKey:    "token",
+		SigningMethod: "HS256",
+		TokenLookup:   "header:" + echo.HeaderAuthorization,
+		AuthScheme:    "Bearer",
+		Claims:        &auth.JWTClaim{},
+		SigningKey:    []byte(os.Getenv("JWT_SIGNINGKEY")),
+	}
+
+	r := e.Group("/api/restricted")
+	r.Use(middleware.JWTWithConfig(config))
+	r.GET("", userHandler.Restricted)
 
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),
