@@ -80,6 +80,7 @@ func main() {
 	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon, jwtMiddleware)
 
 	e.GET("/api/restricted", userHandler.Restricted, jwtMiddleware)
+
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),
 	)

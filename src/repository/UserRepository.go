@@ -39,10 +39,11 @@ func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*enti
 
 	rows, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL)
 
-	var userID uint64
-	rows.Scan(&userID)
+	var id uint64
+	rows.Next()
+	rows.Scan(&id)
 
-	newUser, _ := u.GetUser(ctx, userID)
+	newUser, _ := u.GetUser(ctx, id)
 
 	if err != nil {
 		return nil, err
