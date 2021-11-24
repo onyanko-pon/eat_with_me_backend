@@ -43,6 +43,17 @@ func main() {
 		panic(1)
 	}
 
+	config := middleware.JWTConfig{
+		ContextKey:    "token",
+		SigningMethod: "HS256",
+		TokenLookup:   "header:" + echo.HeaderAuthorization,
+		AuthScheme:    "Bearer",
+		Claims:        &auth.JWTClaim{},
+		SigningKey:    []byte(os.Getenv("JWT_SIGNINGKEY")),
+	}
+
+	jwtMiddleware := middleware.JWTWithConfig(config)
+
 	userRepository := repository.NewUserRepository(sqlHandler)
 	eventRepository := repository.NewEventRepository(sqlHandler)
 
@@ -53,29 +64,20 @@ func main() {
 	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository)
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
 
-	e.GET("/api/users/:id/friends", userHandler.GetFriends)
+	e.GET("/api/users/:id/friends", userHandler.GetFriends, jwtMiddleware)
 	e.POST("/api/users", userHandler.CreateUser)
-	e.PUT("/api/users", userHandler.UpdateUser)
-	e.GET("/api/users/:id", userHandler.GetUser)
+	e.PUT("/api/users", userHandler.UpdateUser, jwtMiddleware)
+	e.GET("/api/users/:id", userHandler.GetUser, jwtMiddleware)
 
-	e.POST("/api/events", eventHandler.CreateEvent)
-	e.PUT("/api/events", eventHandler.UpdateEvent)
-	e.GET("/api/events/:id", eventHandler.GetEvent)
+	e.POST("/api/events", eventHandler.CreateEvent, jwtMiddleware)
+	e.PUT("/api/events", eventHandler.UpdateEvent, jwtMiddleware)
+	e.GET("/api/events/:id", eventHandler.GetEvent, jwtMiddleware)
 
-	e.GET("/api/users/:id/events", userHandler.GetEvents)
-	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents)
-	e.POST("/api/events/:id/join", eventHandler.JoinEvent)
+	e.GET("/api/users/:id/events", userHandler.GetEvents, jwtMiddleware)
+	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents, jwtMiddleware)
+	e.POST("/api/events/:id/join", eventHandler.JoinEvent, jwtMiddleware)
 
-	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon)
-
-	config := middleware.JWTConfig{
-		ContextKey:    "token",
-		SigningMethod: "HS256",
-		TokenLookup:   "header:" + echo.HeaderAuthorization,
-		AuthScheme:    "Bearer",
-		Claims:        &auth.JWTClaim{},
-		SigningKey:    []byte(os.Getenv("JWT_SIGNINGKEY")),
-	}
+	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon, jwtMiddleware)
 
 	r := e.Group("/api/restricted")
 	r.Use(middleware.JWTWithConfig(config))
