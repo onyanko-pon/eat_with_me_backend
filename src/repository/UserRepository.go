@@ -53,7 +53,7 @@ func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*enti
 }
 
 func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*entity.User, error) {
-	query := `UPDATE users SET username = $1, image_url = $2 $1 WHERE id = $3`
+	query := `UPDATE users SET username = $1, image_url = $2 WHERE id = $3`
 
 	_, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL, user.ID)
 
