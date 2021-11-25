@@ -169,6 +169,7 @@ func (h UserHandler) UploadUserIcon(c echo.Context) error {
 
 	file, err := c.FormFile("usericon")
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
@@ -181,7 +182,11 @@ func (h UserHandler) UploadUserIcon(c echo.Context) error {
 	extension := filepath.Ext(file.Filename)
 	filename := "username" + userIDStr + extension
 
-	d, _ := image.Resize(data, filename)
+	d, err := image.Resize(data, filename)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 
 	url, err := h.FileService.UploadUserIcon(d, filename)
 	if err != nil {
