@@ -35,7 +35,7 @@ func NewHandler(dataSource string) (*SQLHandler, error) {
 
 func (h *SQLHandler) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
 	log.Printf("[sql handler] QueryContext, query: %s, args: %v", strings.ReplaceAll(query, "\n", " "), args)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	// defer cancel()
 	return h.db.QueryContext(ctx, query, args...)
 }
