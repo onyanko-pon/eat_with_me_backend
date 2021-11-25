@@ -169,8 +169,8 @@ func (h UserHandler) UploadUserIcon(c echo.Context) error {
 
 	file, err := c.FormFile("usericon")
 
-	params, _ := c.FormParams()
-	fmt.Println("form params", params)
+	form, _ := c.MultipartForm()
+	fmt.Println("form files", form.File)
 
 	if err != nil {
 		fmt.Println(err)
