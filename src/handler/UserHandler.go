@@ -168,6 +168,10 @@ func (h UserHandler) UploadUserIcon(c echo.Context) error {
 	userID, _ := strconv.Atoi(userIDStr)
 
 	file, err := c.FormFile("usericon")
+
+	params, _ := c.FormParams()
+	fmt.Println("form params", params)
+
 	if err != nil {
 		fmt.Println(err)
 		return err
