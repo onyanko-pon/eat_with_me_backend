@@ -52,9 +52,9 @@ func (u UserRepository) FetchUserByUsername(ctx context.Context, username string
 }
 
 func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*entity.User, error) {
-	query := `INSERT INTO users (username, image_url) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO users (username, image_url, twitter_screen_name, twitter_username, twitter_user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	rows, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL)
+	rows, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL, user.TwitterScreenName, user.TwitterUsername, user.TwitterUserID)
 
 	var id uint64
 	rows.Next()
@@ -94,7 +94,7 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 	var users []entity.User
 	for rows.Next() {
 		var user entity.User
-		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL)
+		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
 		users = append(users, user)
 		if err != nil {
 			return nil, err
@@ -119,7 +119,7 @@ func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]
 	var users []entity.User
 	for rows.Next() {
 		var user entity.User
-		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL)
+		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
 		users = append(users, user)
 		if err != nil {
 			return nil, err
