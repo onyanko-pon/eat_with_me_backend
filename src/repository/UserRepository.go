@@ -100,6 +100,10 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 			return nil, err
 		}
 	}
+
+	if len(users) == 0 {
+		return []entity.User{}, nil
+	}
 	return users, nil
 }
 
