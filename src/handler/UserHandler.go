@@ -2,12 +2,16 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 
+	"github.com/dghubble/oauth1"
+	"github.com/dghubble/oauth1/twitter"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
@@ -261,4 +265,70 @@ func (u UserHandler) ApplyFriend(c echo.Context) error {
 		return err
 	}
 	return c.NoContent(http.StatusCreated)
+}
+
+type reqCreateUserWithTwitterVerify struct {
+	OAuthToken    string `json:"oauth_token"`
+	OAuthVerifier string `json:"oauth_verifier"`
+	OAuthSecret   string `json:"oauth_secret"`
+}
+
+func (h UserHandler) CreateUserWithTwitterVerify(c echo.Context) error {
+
+	requestBody := new(reqCreateUserWithTwitterVerify)
+	if err := c.Bind(requestBody); err != nil {
+		return err
+	}
+
+	config := oauth1.Config{
+		ConsumerKey:    os.Getenv("TWITTER_CONSUMER_KEY"),
+		ConsumerSecret: os.Getenv("TWITTER_CONSUMER_SECRET"),
+		CallbackURL:    os.Getenv("TWITTER_OAUTH_CALLBACK_URL"),
+		Endpoint:       twitter.AuthorizeEndpoint,
+	}
+
+	accessToken, accessSecret, err := config.AccessToken(requestBody.OAuthToken, requestBody.OAuthSecret, requestBody.OAuthVerifier)
+
+	if err != nil {
+		return err
+	}
+
+	token := oauth1.NewToken(accessToken, accessSecret)
+	httpClient := config.Client(oauth1.NoContext, token)
+
+	path := "https://api.twitter.com/1.1/account/verify_credentials.json"
+	resp, _ := httpClient.Get(path)
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	var twitterUser entity.TwitterUser
+	err = json.Unmarshal(body, &twitterUser)
+	if err != nil {
+		return err
+	}
+
+	user := &entity.User{
+		ID:                0,
+		Username:          twitterUser.Name,
+		ImageURL:          twitterUser.ProfileImageUrlHttps,
+		TwitterScreenName: twitterUser.ScreenName,
+		TwitterUsername:   twitterUser.Name,
+		TwitterUserID:     twitterUser.ID,
+	}
+
+	user, err = h.UserRepository.CreateUser(c.Request().Context(), *user)
+	if err != nil {
+		return err
+	}
+
+	authUser := &auth.AuthUser{
+		UserID: strconv.Itoa(int(user.ID)),
+	}
+	jwtToken, _ := authUser.GenToken()
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"user":  *user,
+		"token": jwtToken,
+	})
 }

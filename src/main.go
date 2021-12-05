@@ -63,6 +63,7 @@ func main() {
 
 	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository)
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
+	twitterHandler, _ := handler.NewTwitterHandler()
 
 	e.GET("/api/users/:id/friends", userHandler.GetFriends, jwtMiddleware)
 	e.POST("/api/users", userHandler.CreateUser)
@@ -83,6 +84,9 @@ func main() {
 	e.GET("/api/users/:id/token", userHandler.GenToken)
 
 	e.POST("/api/users/:id/apply/:friend_user_id", userHandler.ApplyFriend, jwtMiddleware)
+
+	e.GET("/api/twitter/request_token", twitterHandler.FetchRequestToken)
+	e.POST("/api/users/twitter_verify", userHandler.CreateUserWithTwitterVerify)
 
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),

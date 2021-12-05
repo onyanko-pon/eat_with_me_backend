@@ -31,7 +31,7 @@ func (r EventRepository) GetEvent(ctx context.Context, eventID uint64) (*entity.
 	rows.Next()
 	err = rows.Scan(
 		&event.ID, &event.Title, &event.Description, &event.Latitude, &event.Longitude, &event.OrganizeUserID, &event.StateDatetime, &event.EndDatetime,
-		&organize_user.ID, &organize_user.Username, &organize_user.ImageURL,
+		&organize_user.ID, &organize_user.Username, &organize_user.ImageURL, &organize_user.TwitterScreenName, &organize_user.TwitterUsername, &organize_user.TwitterUserID,
 	)
 	event.OrganizeUser = organize_user
 
@@ -90,7 +90,7 @@ func (r EventRepository) GetJoiningEvents(ctx context.Context, userID uint64) ([
 		var organize_user entity.User
 		err = rows.Scan(
 			&event.ID, &event.Title, &event.Description, &event.Latitude, &event.Longitude, &event.OrganizeUserID, &event.StateDatetime, &event.EndDatetime,
-			&organize_user.ID, &organize_user.Username, &organize_user.ImageURL,
+			&organize_user.ID, &organize_user.Username, &organize_user.ImageURL, &organize_user.TwitterScreenName, &organize_user.TwitterUsername, &organize_user.TwitterUserID,
 		)
 		event.OrganizeUser = organize_user
 		event.JoinUsers = []entity.User{}
@@ -139,7 +139,7 @@ func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity
 		var organize_user entity.User
 		err = rows.Scan(
 			&event.ID, &event.Title, &event.Description, &event.Latitude, &event.Longitude, &event.OrganizeUserID, &event.StateDatetime, &event.EndDatetime,
-			&organize_user.ID, &organize_user.Username, &organize_user.ImageURL,
+			&organize_user.ID, &organize_user.Username, &organize_user.ImageURL, &organize_user.TwitterScreenName, &organize_user.TwitterUsername, &organize_user.TwitterUserID,
 		)
 		event.OrganizeUser = organize_user
 
