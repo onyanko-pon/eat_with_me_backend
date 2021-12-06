@@ -26,7 +26,7 @@ func (u UserRepository) GetUser(ctx context.Context, userID uint64) (*entity.Use
 	}
 	var user entity.User
 	rows.Next()
-	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL)
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
 	if err != nil {
 		return nil, err
 	}
