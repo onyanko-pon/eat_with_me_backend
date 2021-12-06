@@ -113,6 +113,37 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 	return friends, nil
 }
 
+func (u UserRepository) GetRequestFriends(ctx context.Context, userID uint64) ([]entity.Friend, error) {
+	query := `
+	SELECT * FROM friends
+	LEFT JOIN users ON users.id = friends.user_id
+	WHERE friends.friend_user_id = $1 AND friends.status = 'applying';`
+
+	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var friends []entity.Friend
+	for rows.Next() {
+		var user entity.User
+		var friend entity.Friend
+		err = rows.Scan(&friend.Status, &user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+		if err != nil {
+			return nil, err
+		}
+
+		friend.User = user
+		friends = append(friends, friend)
+	}
+
+	if len(friends) == 0 {
+		return []entity.Friend{}, nil
+	}
+	return friends, nil
+}
+
 func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]entity.User, error) {
 	query := "SELECT * FROM users WHERE users.id in (select event_users.user_id from event_users where event_users.event_id = $1)"
 

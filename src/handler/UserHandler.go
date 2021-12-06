@@ -118,10 +118,6 @@ func (u UserHandler) UpdateUser(c echo.Context) error {
 	})
 }
 
-type responseGetFriends struct {
-	Friends []entity.Friend `json:"friends"`
-}
-
 func (u UserHandler) GetFriends(c echo.Context) error {
 
 	idStr := c.Param("id")
@@ -137,8 +133,19 @@ func (u UserHandler) GetFriends(c echo.Context) error {
 		friends = make([]entity.Friend, 0)
 	}
 
-	return c.JSON(http.StatusOK, responseGetFriends{
-		Friends: friends,
+	requestFriends, err := u.UserRepository.GetRequestFriends(c.Request().Context(), uint64(id))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if len(requestFriends) == 0 {
+		requestFriends = make([]entity.Friend, 0)
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"friends":         friends,
+		"request_friends": requestFriends,
 	})
 }
 
