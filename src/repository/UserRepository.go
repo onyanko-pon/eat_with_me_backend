@@ -152,7 +152,7 @@ func (u UserRepository) GetRecommendUsers(ctx context.Context, userID uint64) ([
 		WHERE friends.user_id = $2 AND friends.status = 'accepted';
 	`
 
-	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
+	rows, err := u.sqlHandler.QueryContext(ctx, query, userID, userID)
 
 	if err != nil {
 		return nil, err
