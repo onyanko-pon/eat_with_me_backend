@@ -135,7 +135,7 @@ func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity
 		)
 	`
 
-	location, _ := time.LoadLocation("Asia/Tokyo")
+	location := time.FixedZone("Asia/Tokyo", 9*60*60)
 	now := time.Now().In(location)
 	nowStr := now.Format(time.RFC3339)
 
