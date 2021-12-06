@@ -69,6 +69,7 @@ func main() {
 	e.POST("/api/users", userHandler.CreateUser)
 	e.PUT("/api/users", userHandler.UpdateUser, jwtMiddleware)
 	e.GET("/api/users/:id", userHandler.GetUser, jwtMiddleware)
+	e.GET("/api/users/:username/by_username", userHandler.FetchUserByUsername, jwtMiddleware)
 
 	e.POST("/api/events", eventHandler.CreateEvent, jwtMiddleware)
 	e.PUT("/api/events", eventHandler.UpdateEvent, jwtMiddleware)
