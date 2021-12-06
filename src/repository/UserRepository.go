@@ -86,7 +86,7 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 	query := `
 	SELECT friends.status, users.* FROM friends
 	LEFT JOIN users ON users.id = friends.friend_user_id
-	WHERE friends.user_id = $1 and friends.status == 'accepted'`
+	WHERE friends.user_id = $1 and friends.status = 'accepted'`
 
 	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
 
