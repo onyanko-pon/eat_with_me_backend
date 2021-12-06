@@ -132,6 +132,10 @@ func (u UserHandler) GetFriends(c echo.Context) error {
 		return err
 	}
 
+	if len(friends) == 0 {
+		friends = make([]entity.Friend, 0)
+	}
+
 	return c.JSON(http.StatusOK, responseGetFriends{
 		Friends: friends,
 	})
