@@ -119,7 +119,7 @@ func (u UserHandler) UpdateUser(c echo.Context) error {
 }
 
 type responseGetFriends struct {
-	Friends []entity.User `json:"friends"`
+	Friends []entity.Friend `json:"friends"`
 }
 
 func (u UserHandler) GetFriends(c echo.Context) error {

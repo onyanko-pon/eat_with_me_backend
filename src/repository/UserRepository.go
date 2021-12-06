@@ -82,8 +82,11 @@ func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*enti
 	return newUser, nil
 }
 
-func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity.User, error) {
-	query := "SELECT * FROM users WHERE id IN (SELECT friend_user_id FROM friends WHERE user_id = $1 and friends.status = 'accepted')"
+func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity.Friend, error) {
+	query := `
+	SELECT * FROM friends
+	LEFT JOIN users ON users.id = friends.friend_user_id
+	WHERE friends.user_id = $1;`
 
 	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
 
@@ -91,20 +94,23 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 		return nil, err
 	}
 
-	var users []entity.User
+	var friends []entity.Friend
 	for rows.Next() {
 		var user entity.User
-		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
-		users = append(users, user)
+		var friend entity.Friend
+		err = rows.Scan(&friend.Status, &user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+
+		friend.User = user
+		friends = append(friends, friend)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if len(users) == 0 {
-		return []entity.User{}, nil
+	if len(friends) == 0 {
+		return []entity.Friend{}, nil
 	}
-	return users, nil
+	return friends, nil
 }
 
 func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]entity.User, error) {
