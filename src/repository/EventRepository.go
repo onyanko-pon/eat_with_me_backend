@@ -135,6 +135,7 @@ func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity
 		)
 	`
 
+	time.LoadLocation("Asia/Tokyo")
 	now := time.Now()
 	nowStr := now.String()
 
