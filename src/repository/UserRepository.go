@@ -84,7 +84,7 @@ func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*enti
 
 func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity.Friend, error) {
 	query := `
-	SELECT * FROM friends
+	SELECT friends.status, users.* FROM friends
 	LEFT JOIN users ON users.id = friends.friend_user_id
 	WHERE friends.user_id = $1;`
 
@@ -99,12 +99,12 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 		var user entity.User
 		var friend entity.Friend
 		err = rows.Scan(&friend.Status, &user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
-
-		friend.User = user
-		friends = append(friends, friend)
 		if err != nil {
 			return nil, err
 		}
+
+		friend.User = user
+		friends = append(friends, friend)
 	}
 
 	if len(friends) == 0 {

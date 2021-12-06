@@ -129,6 +129,7 @@ func (u UserHandler) GetFriends(c echo.Context) error {
 
 	friends, err := u.UserRepository.GetFriends(c.Request().Context(), uint64(id))
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
