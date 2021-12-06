@@ -310,7 +310,7 @@ func (h UserHandler) CreateUserWithTwitterVerify(c echo.Context) error {
 
 	user := &entity.User{
 		ID:                0,
-		Username:          twitterUser.Name,
+		Username:          twitterUser.ScreenName,
 		ImageURL:          twitterUser.ProfileImageUrlHttps,
 		TwitterScreenName: twitterUser.ScreenName,
 		TwitterUsername:   twitterUser.Name,
