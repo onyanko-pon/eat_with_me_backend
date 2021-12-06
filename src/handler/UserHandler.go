@@ -283,6 +283,36 @@ func (u UserHandler) ApplyFriend(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+func (u UserHandler) AcceptApplyFriend(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	friendUserIDStr := c.Param("friend_user_id")
+	friendUserID, _ := strconv.Atoi(friendUserIDStr)
+
+	err := u.UserRepository.AcceptApplyFriend(context.Background(), uint64(id), uint64(friendUserID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
+func (u UserHandler) BlockFriend(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	friendUserIDStr := c.Param("friend_user_id")
+	friendUserID, _ := strconv.Atoi(friendUserIDStr)
+
+	err := u.UserRepository.BlockFriend(context.Background(), uint64(id), uint64(friendUserID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
 type reqCreateUserWithTwitterVerify struct {
 	OAuthToken    string `json:"oauth_token"`
 	OAuthVerifier string `json:"oauth_verifier"`

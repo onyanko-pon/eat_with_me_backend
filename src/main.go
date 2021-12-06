@@ -85,6 +85,8 @@ func main() {
 	e.GET("/api/users/:id/token", userHandler.GenToken)
 
 	e.POST("/api/users/:id/apply/:friend_user_id", userHandler.ApplyFriend, jwtMiddleware)
+	e.POST("/api/users/:id/accept/:friend_user_id", userHandler.AcceptApplyFriend, jwtMiddleware)
+	e.POST("/api/users/:id/block/:friend_user_id", userHandler.BlockFriend, jwtMiddleware)
 
 	e.GET("/api/twitter/request_token", twitterHandler.FetchRequestToken)
 	e.POST("/api/users/twitter_verify", userHandler.CreateUserWithTwitterVerify)

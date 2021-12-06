@@ -86,7 +86,7 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 	query := `
 	SELECT friends.status, users.* FROM friends
 	LEFT JOIN users ON users.id = friends.friend_user_id
-	WHERE friends.user_id = $1;`
+	WHERE friends.user_id = $1 and friends.status == 'accepted'`
 
 	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
 
@@ -171,6 +171,20 @@ func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]
 
 func (u UserRepository) ApplyFriend(ctx context.Context, userID uint64, friendUserID uint64) error {
 	query := "INSERT INTO friends (user_id, friend_user_id, status) VALUES ($1, $2, 'applying')"
+
+	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
+	return err
+}
+
+func (u UserRepository) AcceptApplyFriend(ctx context.Context, userID uint64, friendUserID uint64) error {
+	query := "UPDATE friends SET status = 'accepted' where user_id = $1 AND friend_user_id = $2"
+
+	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
+	return err
+}
+
+func (u UserRepository) BlockFriend(ctx context.Context, userID uint64, friendUserID uint64) error {
+	query := "UPDATE friends SET status = 'blocked' where user_id = $1 AND friend_user_id = $2"
 
 	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
 	return err
