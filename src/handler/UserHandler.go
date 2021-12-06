@@ -160,6 +160,10 @@ func (h UserHandler) GetEvents(c echo.Context) error {
 		return err
 	}
 
+	if len(events) == 0 {
+		events = make([]entity.Event, 0)
+	}
+
 	return c.JSON(http.StatusOK, responseGetEvents{
 		Events: events,
 		User:   user,
