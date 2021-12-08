@@ -67,6 +67,7 @@ func main() {
 	friendHandler, _ := handler.NewFriendHandler(userRepository)
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
 	twitterHandler, _ := handler.NewTwitterHandler()
+	devHandler, _ := handler.NewDevHandler(*userRepository)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
@@ -108,8 +109,8 @@ func main() {
 	e.GET("/api/twitter/request_token", twitterHandler.FetchRequestToken)
 
 	// TODO Devlop用
-	e.GET("/api/restricted", userHandler.Restricted, jwtMiddleware)
-	e.GET("/api/users/:id/token", userHandler.GenToken)
+	e.GET("/api/restricted", devHandler.Restricted, jwtMiddleware)
+	e.GET("/api/users/:id/token", devHandler.GenToken)
 
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),

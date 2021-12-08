@@ -3,11 +3,9 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
 	"github.com/onyanko-pon/eat_with_me_backend/src/entity"
@@ -154,38 +152,6 @@ func (h UserHandler) UploadUserIcon(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"filename": file.Filename,
 		"url":      url,
-	})
-}
-
-func (u UserHandler) Restricted(c echo.Context) error {
-	token := c.Get("token").(*jwt.Token)
-	fmt.Println(token)
-	claims := token.Claims.(*auth.JWTClaim)
-	authUser, _ := claims.GenAuthUser()
-
-	return c.String(http.StatusOK, "Welcome "+authUser.UserID)
-}
-
-func (u UserHandler) GenToken(c echo.Context) error {
-
-	if os.Getenv("GO_ENV") == "production" {
-		return c.JSON(http.StatusUnauthorized, echo.Map{
-			"message": "good bye",
-		})
-	}
-
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-
-	user, _ := u.UserRepository.GetUser(c.Request().Context(), uint64(id))
-	authUser := &auth.AuthUser{
-		UserID: idStr,
-	}
-	token, _ := authUser.GenToken()
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"user":  user,
-		"token": token,
 	})
 }
 
