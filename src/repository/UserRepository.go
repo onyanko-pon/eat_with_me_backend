@@ -51,6 +51,23 @@ func (u UserRepository) FetchUserByUsername(ctx context.Context, username string
 	return &user, nil
 }
 
+func (u UserRepository) FetchUserByTwitterUserID(ctx context.Context, twitterUserID int) (*entity.User, error) {
+	query := `SELECT * FROM users WHERE twitter_user_id = $1`
+
+	rows, err := u.sqlHandler.QueryContext(ctx, query, twitterUserID)
+	if err != nil {
+		return nil, err
+	}
+	var user entity.User
+	rows.Next()
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*entity.User, error) {
 	query := `INSERT INTO users (username, image_url, twitter_screen_name, twitter_username, twitter_user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 

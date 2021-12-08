@@ -374,7 +374,28 @@ func (h UserHandler) CreateUserWithTwitterVerify(c echo.Context) error {
 		return err
 	}
 
-	user := &entity.User{
+	user, _ := h.UserRepository.FetchUserByTwitterUserID(c.Request().Context(), int(twitterUser.ID))
+	if user != nil {
+		authUser := &auth.AuthUser{
+			UserID: strconv.Itoa(int(user.ID)),
+		}
+		jwtToken, _ := authUser.GenToken()
+		return c.JSON(http.StatusOK, echo.Map{
+			"user":  *user,
+			"token": jwtToken,
+		})
+	}
+
+	username := twitterUser.ScreenName
+	for {
+		user, _ := h.UserRepository.FetchUserByUsername(c.Request().Context(), username)
+		if user == nil {
+			break
+		}
+		username = "_" + username
+	}
+
+	user = &entity.User{
 		ID:                0,
 		Username:          twitterUser.ScreenName,
 		ImageURL:          twitterUser.ProfileImageUrlHttps,
