@@ -66,7 +66,7 @@ func main() {
 	twitterHandler, _ := handler.NewTwitterHandler()
 
 	e.GET("/api/users/:id/friends", userHandler.GetFriends, jwtMiddleware)
-	e.GET("/api/users/:id/recommend_friends", userHandler.GetFriends, jwtMiddleware)
+	e.GET("/api/users/:id/recommend_friends", userHandler.GetRecommendUsers, jwtMiddleware)
 	e.POST("/api/users", userHandler.CreateUser)
 	e.PUT("/api/users", userHandler.UpdateUser, jwtMiddleware)
 	e.GET("/api/users/:id", userHandler.GetUser, jwtMiddleware)
