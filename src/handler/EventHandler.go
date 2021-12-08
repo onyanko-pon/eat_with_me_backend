@@ -94,20 +94,13 @@ type responseJoinEvent struct {
 	Event *entity.Event `json:"event"`
 }
 
-type requestJoinEventBody struct {
-	UserID uint64 `json:"user_id"`
-}
-
 func (h EventHandler) JoinEvent(c echo.Context) error {
+	userIdStr := c.Param("id")
+	userID, _ := strconv.Atoi(userIdStr)
 
-	requestBody := new(requestJoinEventBody)
-	if err := c.Bind(requestBody); err != nil {
-		return err
-	}
-
-	idStr := c.Param("id")
-	eventID, _ := strconv.Atoi(idStr)
-	event, _ := h.EventRepository.JoinEvent(c.Request().Context(), uint64(eventID), requestBody.UserID)
+	eventIdStr := c.Param("event_id")
+	eventID, _ := strconv.Atoi(eventIdStr)
+	event, _ := h.EventRepository.JoinEvent(c.Request().Context(), uint64(eventID), uint64(userID))
 
 	return c.JSON(http.StatusOK, responseJoinEvent{
 		Event: event,

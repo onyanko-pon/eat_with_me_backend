@@ -96,3 +96,23 @@ func (h FriendHandler) AcceptApplyFriend(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusCreated)
 }
+
+func (h FriendHandler) GetRecommendUsers(c echo.Context) error {
+
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	users, err := h.userRepository.GetRecommendUsers(c.Request().Context(), uint64(id))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if len(users) == 0 {
+		users = make([]entity.User, 0)
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"users": users,
+	})
+}

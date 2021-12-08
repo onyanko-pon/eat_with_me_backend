@@ -116,26 +116,6 @@ func (u UserHandler) UpdateUser(c echo.Context) error {
 	})
 }
 
-func (u UserHandler) GetRecommendUsers(c echo.Context) error {
-
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-
-	users, err := u.UserRepository.GetRecommendUsers(c.Request().Context(), uint64(id))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	if len(users) == 0 {
-		users = make([]entity.User, 0)
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"users": users,
-	})
-}
-
 type responseGetEvents struct {
 	User   *entity.User   `json:"user"`
 	Events []entity.Event `json:"events"`
