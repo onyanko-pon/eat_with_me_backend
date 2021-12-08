@@ -34,10 +34,6 @@ func NewUserHandler(userRepository *repository.UserRepository, eventRepository *
 	}, nil
 }
 
-type responseGetUser struct {
-	User *entity.User `json:"user"`
-}
-
 func (u UserHandler) GetUser(c echo.Context) error {
 
 	idStr := c.Param("id")
@@ -45,8 +41,8 @@ func (u UserHandler) GetUser(c echo.Context) error {
 
 	user, _ := u.UserRepository.GetUser(c.Request().Context(), uint64(id))
 
-	return c.JSON(http.StatusOK, responseGetUser{
-		User: user,
+	return c.JSON(http.StatusOK, echo.Map{
+		"user": user,
 	})
 }
 
@@ -59,10 +55,6 @@ func (u UserHandler) FetchUserByUsername(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"user": user,
 	})
-}
-
-type responseUpdateUser struct {
-	User *entity.User `json:"user"`
 }
 
 func (u UserHandler) UpdateUser(c echo.Context) error {
@@ -78,14 +70,9 @@ func (u UserHandler) UpdateUser(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, responseUpdateUser{
-		User: user,
+	return c.JSON(http.StatusOK, echo.Map{
+		"user": user,
 	})
-}
-
-type responseGetEvents struct {
-	User   *entity.User   `json:"user"`
-	Events []entity.Event `json:"events"`
 }
 
 func (h UserHandler) GetEvents(c echo.Context) error {
@@ -110,9 +97,9 @@ func (h UserHandler) GetEvents(c echo.Context) error {
 		events = make([]entity.Event, 0)
 	}
 
-	return c.JSON(http.StatusOK, responseGetEvents{
-		Events: events,
-		User:   user,
+	return c.JSON(http.StatusOK, echo.Map{
+		"events": events,
+		"user":   user,
 	})
 }
 

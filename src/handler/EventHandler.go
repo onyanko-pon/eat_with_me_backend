@@ -19,10 +19,6 @@ func NewEventHandler(eventRepository *repository.EventRepository) (*EventHandler
 	}, nil
 }
 
-type responseGetEvent struct {
-	Event *entity.Event `json:"event"`
-}
-
 func (h EventHandler) GetEvent(c echo.Context) error {
 
 	idStr := c.Param("id")
@@ -30,16 +26,12 @@ func (h EventHandler) GetEvent(c echo.Context) error {
 
 	event, _ := h.EventRepository.GetEvent(c.Request().Context(), uint64(id))
 
-	return c.JSON(http.StatusOK, responseGetEvent{
-		Event: event,
+	return c.JSON(http.StatusOK, echo.Map{
+		"event": event,
 	})
 }
 
 type requestCreateEventBody struct {
-	Event *entity.Event `json:"event"`
-}
-
-type responseCreateEvent struct {
 	Event *entity.Event `json:"event"`
 }
 
@@ -52,13 +44,9 @@ func (h EventHandler) CreateEvent(c echo.Context) error {
 
 	h.EventRepository.CreateEvent(c.Request().Context(), *requestBody.Event)
 
-	return c.JSON(http.StatusOK, responseCreateEvent{
-		Event: requestBody.Event,
+	return c.JSON(http.StatusOK, echo.Map{
+		"event": requestBody.Event,
 	})
-}
-
-type responseUpdateEvent struct {
-	Event *entity.Event `json:"event"`
 }
 
 func (h EventHandler) UpdateEvent(c echo.Context) error {
@@ -70,13 +58,9 @@ func (h EventHandler) UpdateEvent(c echo.Context) error {
 
 	h.EventRepository.UpdateEvent(c.Request().Context(), *event)
 
-	return c.JSON(http.StatusOK, responseUpdateEvent{
-		Event: event,
+	return c.JSON(http.StatusOK, echo.Map{
+		"event": event,
 	})
-}
-
-type responseGetJoiningEvents struct {
-	Events []entity.Event `json:"events"`
 }
 
 func (h EventHandler) GetJoiningEvents(c echo.Context) error {
@@ -85,13 +69,9 @@ func (h EventHandler) GetJoiningEvents(c echo.Context) error {
 	id, _ := strconv.Atoi(idStr)
 	events, _ := h.EventRepository.GetJoiningEvents(c.Request().Context(), uint64(id))
 
-	return c.JSON(http.StatusOK, responseGetJoiningEvents{
-		Events: events,
+	return c.JSON(http.StatusOK, echo.Map{
+		"events": events,
 	})
-}
-
-type responseJoinEvent struct {
-	Event *entity.Event `json:"event"`
 }
 
 func (h EventHandler) JoinEvent(c echo.Context) error {
@@ -102,7 +82,7 @@ func (h EventHandler) JoinEvent(c echo.Context) error {
 	eventID, _ := strconv.Atoi(eventIdStr)
 	event, _ := h.EventRepository.JoinEvent(c.Request().Context(), uint64(eventID), uint64(userID))
 
-	return c.JSON(http.StatusOK, responseJoinEvent{
-		Event: event,
+	return c.JSON(http.StatusOK, echo.Map{
+		"event": event,
 	})
 }
