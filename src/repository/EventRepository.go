@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/onyanko-pon/eat_with_me_backend/src/entity"
 	"github.com/onyanko-pon/eat_with_me_backend/src/sql_handler"
@@ -124,11 +125,21 @@ func (r EventRepository) JoinEvent(ctx context.Context, eventID uint64, userID u
 }
 
 func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity.User) ([]entity.Event, error) {
-	query := `SELECT * FROM events LEFT
-							JOIN users as organize_user ON organize_user.id = events.organize_user_id
-							WHERE events.organize_user_id IN (SELECT friend_user_id FROM friends WHERE friends.user_id = $1 and friends.status = 'accepted') OR events.organize_user_id = $2`
+	query := `
+	SELECT * FROM events LEFT
+	JOIN users as organize_user ON organize_user.id = events.organize_user_id
+	WHERE
+		events.start_datetime > $2 and (
+			events.organize_user_id IN (SELECT friend_user_id FROM friends WHERE friends.user_id = $1 and friends.status = 'accepted')
+			OR events.organize_user_id = $3
+		)
+	`
 
-	rows, err := r.sqlHandler.QueryContext(ctx, query, user.ID, user.ID)
+	location := time.FixedZone("Asia/Tokyo", 9*60*60)
+	now := time.Now().In(location)
+	nowStr := now.Format(time.RFC3339)
+
+	rows, err := r.sqlHandler.QueryContext(ctx, query, user.ID, nowStr, user.ID)
 	if err != nil {
 		return nil, err
 	}

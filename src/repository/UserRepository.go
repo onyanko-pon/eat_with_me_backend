@@ -26,7 +26,7 @@ func (u UserRepository) GetUser(ctx context.Context, userID uint64) (*entity.Use
 	}
 	var user entity.User
 	rows.Next()
-	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL)
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (u UserRepository) FetchUserByUsername(ctx context.Context, username string
 	}
 	var user entity.User
 	rows.Next()
-	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL)
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +82,75 @@ func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*enti
 	return newUser, nil
 }
 
-func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity.User, error) {
-	query := "SELECT * FROM users WHERE id IN (SELECT friend_user_id FROM friends WHERE user_id = $1 and friends.status = 'accepted')"
+func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity.Friend, error) {
+	query := `
+	SELECT friends.status, users.* FROM friends
+	LEFT JOIN users ON users.id = friends.friend_user_id
+	WHERE friends.user_id = $1 and friends.status = 'accepted'`
+
+	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var friends []entity.Friend
+	for rows.Next() {
+		var user entity.User
+		var friend entity.Friend
+		err = rows.Scan(&friend.Status, &user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+		if err != nil {
+			return nil, err
+		}
+
+		friend.User = user
+		friends = append(friends, friend)
+	}
+
+	if len(friends) == 0 {
+		return []entity.Friend{}, nil
+	}
+	return friends, nil
+}
+
+func (u UserRepository) GetRequestFriends(ctx context.Context, userID uint64) ([]entity.Friend, error) {
+	query := `
+	SELECT * FROM friends
+	LEFT JOIN users ON users.id = friends.user_id
+	WHERE friends.friend_user_id = $1 AND friends.status = 'applying';`
+
+	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var friends []entity.Friend
+	for rows.Next() {
+		var user entity.User
+		var friend entity.Friend
+		err = rows.Scan(&friend.Status, &user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+		if err != nil {
+			return nil, err
+		}
+
+		friend.User = user
+		friends = append(friends, friend)
+	}
+
+	if len(friends) == 0 {
+		return []entity.Friend{}, nil
+	}
+	return friends, nil
+}
+
+func (u UserRepository) GetRecommendUsers(ctx context.Context, userID uint64) ([]entity.User, error) {
+	query := `
+	SELECT users.* FROM friends
+		JOIN friends AS recommend_friends ON friends.friend_user_id = recommend_friends.user_id AND NOT recommend_friends.friend_user_id = $1
+		JOIN users ON recommend_friends.friend_user_id = users.id
+		WHERE friends.user_id = $2 AND friends.status = 'accepted';
+	`
 
 	rows, err := u.sqlHandler.QueryContext(ctx, query, userID)
 
@@ -134,6 +201,20 @@ func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]
 
 func (u UserRepository) ApplyFriend(ctx context.Context, userID uint64, friendUserID uint64) error {
 	query := "INSERT INTO friends (user_id, friend_user_id, status) VALUES ($1, $2, 'applying')"
+
+	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
+	return err
+}
+
+func (u UserRepository) AcceptApplyFriend(ctx context.Context, userID uint64, friendUserID uint64) error {
+	query := "UPDATE friends SET status = 'accepted' where user_id = $1 AND friend_user_id = $2"
+
+	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
+	return err
+}
+
+func (u UserRepository) BlockFriend(ctx context.Context, userID uint64, friendUserID uint64) error {
+	query := "UPDATE friends SET status = 'blocked' where user_id = $1 AND friend_user_id = $2"
 
 	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
 	return err

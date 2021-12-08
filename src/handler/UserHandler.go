@@ -118,10 +118,6 @@ func (u UserHandler) UpdateUser(c echo.Context) error {
 	})
 }
 
-type responseGetFriends struct {
-	Friends []entity.User `json:"friends"`
-}
-
 func (u UserHandler) GetFriends(c echo.Context) error {
 
 	idStr := c.Param("id")
@@ -129,11 +125,47 @@ func (u UserHandler) GetFriends(c echo.Context) error {
 
 	friends, err := u.UserRepository.GetFriends(c.Request().Context(), uint64(id))
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
-	return c.JSON(http.StatusOK, responseGetFriends{
-		Friends: friends,
+	if len(friends) == 0 {
+		friends = make([]entity.Friend, 0)
+	}
+
+	requestFriends, err := u.UserRepository.GetRequestFriends(c.Request().Context(), uint64(id))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if len(requestFriends) == 0 {
+		requestFriends = make([]entity.Friend, 0)
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"friends":         friends,
+		"request_friends": requestFriends,
+	})
+}
+
+func (u UserHandler) GetRecommendUsers(c echo.Context) error {
+
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	users, err := u.UserRepository.GetRecommendUsers(c.Request().Context(), uint64(id))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if len(users) == 0 {
+		users = make([]entity.User, 0)
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"users": users,
 	})
 }
 
@@ -158,6 +190,10 @@ func (h UserHandler) GetEvents(c echo.Context) error {
 	if err != nil {
 		fmt.Print(err)
 		return err
+	}
+
+	if len(events) == 0 {
+		events = make([]entity.Event, 0)
 	}
 
 	return c.JSON(http.StatusOK, responseGetEvents{
@@ -267,6 +303,36 @@ func (u UserHandler) ApplyFriend(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+func (u UserHandler) AcceptApplyFriend(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	friendUserIDStr := c.Param("friend_user_id")
+	friendUserID, _ := strconv.Atoi(friendUserIDStr)
+
+	err := u.UserRepository.AcceptApplyFriend(context.Background(), uint64(id), uint64(friendUserID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
+func (u UserHandler) BlockFriend(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	friendUserIDStr := c.Param("friend_user_id")
+	friendUserID, _ := strconv.Atoi(friendUserIDStr)
+
+	err := u.UserRepository.BlockFriend(context.Background(), uint64(id), uint64(friendUserID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
 type reqCreateUserWithTwitterVerify struct {
 	OAuthToken    string `json:"oauth_token"`
 	OAuthVerifier string `json:"oauth_verifier"`
@@ -310,7 +376,7 @@ func (h UserHandler) CreateUserWithTwitterVerify(c echo.Context) error {
 
 	user := &entity.User{
 		ID:                0,
-		Username:          twitterUser.Name,
+		Username:          twitterUser.ScreenName,
 		ImageURL:          twitterUser.ProfileImageUrlHttps,
 		TwitterScreenName: twitterUser.ScreenName,
 		TwitterUsername:   twitterUser.Name,

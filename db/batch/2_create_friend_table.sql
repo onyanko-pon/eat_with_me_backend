@@ -1,4 +1,4 @@
-CREATE TYPE FRIEND_STATUS AS ENUM ('applying', 'accepted');
+CREATE TYPE FRIEND_STATUS AS ENUM ('applying', 'accepted', 'muted');
 
 CREATE TABLE friends (
   user_id        INT NOT NULL REFERENCES users(id),
