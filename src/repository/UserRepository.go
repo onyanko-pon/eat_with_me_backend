@@ -132,7 +132,7 @@ func (u UserRepository) GetFriends(ctx context.Context, userID uint64) ([]entity
 
 func (u UserRepository) GetRequestFriends(ctx context.Context, userID uint64) ([]entity.Friend, error) {
 	query := `
-	SELECT * FROM friends
+	SELECT friends.status, users.* FROM friends
 	LEFT JOIN users ON users.id = friends.user_id
 	WHERE friends.friend_user_id = $1 AND friends.status = 'applying';`
 
