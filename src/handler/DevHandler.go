@@ -16,7 +16,7 @@ type DevHandler struct {
 	userRepository repository.UserRepository
 }
 
-func NewDevHandler(*userRepository repository.UserRepository) (*DevHandler, error) {
+func NewDevHandler(userRepository repository.UserRepository) (*DevHandler, error) {
 	return &DevHandler{
 		userRepository: userRepository,
 	}, nil
