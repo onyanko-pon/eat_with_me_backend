@@ -1,17 +1,12 @@
 package handler
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/dghubble/oauth1"
-	"github.com/dghubble/oauth1/twitter"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
@@ -19,20 +14,23 @@ import (
 	"github.com/onyanko-pon/eat_with_me_backend/src/image"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
 	"github.com/onyanko-pon/eat_with_me_backend/src/service"
+	"github.com/onyanko-pon/eat_with_me_backend/src/usecase"
 )
 
 type UserHandler struct {
-	UserRepository  *repository.UserRepository
-	EventRepository *repository.EventRepository
-	FileService     *service.FileService
+	UserRepository    *repository.UserRepository
+	EventRepository   *repository.EventRepository
+	FileService       *service.FileService
+	createUserUsecase *usecase.CreateUserUsecase
 }
 
-func NewUserHandler(userRepository *repository.UserRepository, eventRepository *repository.EventRepository) (*UserHandler, error) {
+func NewUserHandler(userRepository *repository.UserRepository, eventRepository *repository.EventRepository, createUserUsecase *usecase.CreateUserUsecase) (*UserHandler, error) {
 	fileService, _ := service.NewFileService()
 	return &UserHandler{
-		UserRepository:  userRepository,
-		EventRepository: eventRepository,
-		FileService:     fileService,
+		UserRepository:    userRepository,
+		EventRepository:   eventRepository,
+		FileService:       fileService,
+		createUserUsecase: createUserUsecase,
 	}, nil
 }
 
@@ -115,37 +113,6 @@ func (u UserHandler) UpdateUser(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, responseUpdateUser{
 		User: user,
-	})
-}
-
-func (u UserHandler) GetFriends(c echo.Context) error {
-
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-
-	friends, err := u.UserRepository.GetFriends(c.Request().Context(), uint64(id))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	if len(friends) == 0 {
-		friends = make([]entity.Friend, 0)
-	}
-
-	requestFriends, err := u.UserRepository.GetRequestFriends(c.Request().Context(), uint64(id))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	if len(requestFriends) == 0 {
-		requestFriends = make([]entity.Friend, 0)
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"friends":         friends,
-		"request_friends": requestFriends,
 	})
 }
 
@@ -288,51 +255,6 @@ func (u UserHandler) GenToken(c echo.Context) error {
 	})
 }
 
-func (u UserHandler) ApplyFriend(c echo.Context) error {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-
-	friendUserIDStr := c.Param("friend_user_id")
-	friendUserID, _ := strconv.Atoi(friendUserIDStr)
-
-	err := u.UserRepository.ApplyFriend(context.Background(), uint64(id), uint64(friendUserID))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return c.NoContent(http.StatusCreated)
-}
-
-func (u UserHandler) AcceptApplyFriend(c echo.Context) error {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-
-	friendUserIDStr := c.Param("friend_user_id")
-	friendUserID, _ := strconv.Atoi(friendUserIDStr)
-
-	err := u.UserRepository.AcceptApplyFriend(context.Background(), uint64(id), uint64(friendUserID))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return c.NoContent(http.StatusCreated)
-}
-
-func (u UserHandler) BlockFriend(c echo.Context) error {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-
-	friendUserIDStr := c.Param("friend_user_id")
-	friendUserID, _ := strconv.Atoi(friendUserIDStr)
-
-	err := u.UserRepository.BlockFriend(context.Background(), uint64(id), uint64(friendUserID))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return c.NoContent(http.StatusCreated)
-}
-
 type reqCreateUserWithTwitterVerify struct {
 	OAuthToken    string `json:"oauth_token"`
 	OAuthVerifier string `json:"oauth_verifier"`
@@ -346,69 +268,10 @@ func (h UserHandler) CreateUserWithTwitterVerify(c echo.Context) error {
 		return err
 	}
 
-	config := oauth1.Config{
-		ConsumerKey:    os.Getenv("TWITTER_CONSUMER_KEY"),
-		ConsumerSecret: os.Getenv("TWITTER_CONSUMER_SECRET"),
-		CallbackURL:    os.Getenv("TWITTER_OAUTH_CALLBACK_URL"),
-		Endpoint:       twitter.AuthorizeEndpoint,
-	}
-
-	accessToken, accessSecret, err := config.AccessToken(requestBody.OAuthToken, requestBody.OAuthSecret, requestBody.OAuthVerifier)
-
+	user, err := h.createUserUsecase.CreateUserWithTwitterVerify(c.Request().Context(), requestBody.OAuthToken, requestBody.OAuthSecret, requestBody.OAuthVerifier)
 	if err != nil {
 		return err
 	}
-
-	token := oauth1.NewToken(accessToken, accessSecret)
-	httpClient := config.Client(oauth1.NoContext, token)
-
-	path := "https://api.twitter.com/1.1/account/verify_credentials.json"
-	resp, _ := httpClient.Get(path)
-
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	var twitterUser entity.TwitterUser
-	err = json.Unmarshal(body, &twitterUser)
-	if err != nil {
-		return err
-	}
-
-	user, _ := h.UserRepository.FetchUserByTwitterUserID(c.Request().Context(), int(twitterUser.ID))
-	if user != nil {
-		authUser := &auth.AuthUser{
-			UserID: strconv.Itoa(int(user.ID)),
-		}
-		jwtToken, _ := authUser.GenToken()
-		return c.JSON(http.StatusOK, echo.Map{
-			"user":  *user,
-			"token": jwtToken,
-		})
-	}
-
-	username := twitterUser.ScreenName
-	for {
-		user, _ := h.UserRepository.FetchUserByUsername(c.Request().Context(), username)
-		if user == nil {
-			break
-		}
-		username = "_" + username
-	}
-
-	user = &entity.User{
-		ID:                0,
-		Username:          twitterUser.ScreenName,
-		ImageURL:          twitterUser.ProfileImageUrlHttps,
-		TwitterScreenName: twitterUser.ScreenName,
-		TwitterUsername:   twitterUser.Name,
-		TwitterUserID:     twitterUser.ID,
-	}
-
-	user, err = h.UserRepository.CreateUser(c.Request().Context(), *user)
-	if err != nil {
-		return err
-	}
-
 	authUser := &auth.AuthUser{
 		UserID: strconv.Itoa(int(user.ID)),
 	}

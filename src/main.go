@@ -11,7 +11,9 @@ import (
 	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
 	"github.com/onyanko-pon/eat_with_me_backend/src/handler"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
+	"github.com/onyanko-pon/eat_with_me_backend/src/service"
 	"github.com/onyanko-pon/eat_with_me_backend/src/sql_handler"
+	"github.com/onyanko-pon/eat_with_me_backend/src/usecase"
 )
 
 func main() {
@@ -61,11 +63,15 @@ func main() {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository)
+	twitterAuthService := &service.TwitterAuthService{}
+	userService, _ := service.NewUserService(*userRepository)
+	createUserUsecase, _ := usecase.NewCreatUserUsercase(twitterAuthService, userService, userRepository)
+
+	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository, createUserUsecase)
+	friendHandler, _ := handler.NewFriendHandler(userRepository)
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
 	twitterHandler, _ := handler.NewTwitterHandler()
 
-	e.GET("/api/users/:id/friends", userHandler.GetFriends, jwtMiddleware)
 	e.GET("/api/users/:id/recommend_friends", userHandler.GetRecommendUsers, jwtMiddleware)
 	e.POST("/api/users", userHandler.CreateUser)
 	e.PUT("/api/users", userHandler.UpdateUser, jwtMiddleware)
@@ -85,9 +91,10 @@ func main() {
 	e.GET("/api/restricted", userHandler.Restricted, jwtMiddleware)
 	e.GET("/api/users/:id/token", userHandler.GenToken)
 
-	e.POST("/api/users/:id/apply/:friend_user_id", userHandler.ApplyFriend, jwtMiddleware)
-	e.POST("/api/users/:id/accept/:friend_user_id", userHandler.AcceptApplyFriend, jwtMiddleware)
-	e.POST("/api/users/:id/block/:friend_user_id", userHandler.BlockFriend, jwtMiddleware)
+	e.GET("/api/users/:id/friends", friendHandler.GetFriends, jwtMiddleware)
+	e.POST("/api/users/:id/friends/:friend_user_id/apply", friendHandler.ApplyFriend, jwtMiddleware)
+	e.POST("/api/users/:id/friends/:friend_user_id/accept", friendHandler.AcceptApplyFriend, jwtMiddleware)
+	e.POST("/api/users/:id/friends/:friend_user_id/block", friendHandler.BlockFriend, jwtMiddleware)
 
 	e.GET("/api/twitter/request_token", twitterHandler.FetchRequestToken)
 	e.POST("/api/users/twitter_verify", userHandler.CreateUserWithTwitterVerify)
