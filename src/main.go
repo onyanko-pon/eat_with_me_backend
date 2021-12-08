@@ -74,7 +74,6 @@ func main() {
 
 	userAPI := e.Group("/api/users")
 	{
-		userAPI.POST("", userHandler.CreateUser)
 		// TODO 多分これidが必要
 		userAPI.PUT("", userHandler.UpdateUser, jwtMiddleware)
 		userAPI.GET("/:id", userHandler.GetUser, jwtMiddleware)

@@ -61,39 +61,6 @@ func (u UserHandler) FetchUserByUsername(c echo.Context) error {
 	})
 }
 
-type responseCreateUser struct {
-	User  *entity.User `json:"user"`
-	Token string       `json:"token"`
-}
-
-type requestBodyCreateUser struct {
-	User *entity.User `json:"user"`
-}
-
-func (u UserHandler) CreateUser(c echo.Context) error {
-
-	requestBody := new(requestBodyCreateUser)
-	if err := c.Bind(requestBody); err != nil {
-		return err
-	}
-
-	user, err := u.UserRepository.CreateUser(c.Request().Context(), *requestBody.User)
-
-	if err != nil {
-		return err
-	}
-
-	authUser := &auth.AuthUser{
-		UserID: strconv.Itoa(int(user.ID)),
-	}
-	token, _ := authUser.GenToken()
-
-	return c.JSON(http.StatusOK, responseCreateUser{
-		User:  user,
-		Token: token,
-	})
-}
-
 type responseUpdateUser struct {
 	User *entity.User `json:"user"`
 }
