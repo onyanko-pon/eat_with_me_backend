@@ -12,12 +12,17 @@ import (
 )
 
 type FriendHandler struct {
-	userRepository *repository.UserRepository
+	userRepository   *repository.UserRepository
+	friendRepository *repository.FriendRepository
 }
 
-func NewFriendHandler(userRepository *repository.UserRepository) (*FriendHandler, error) {
+func NewFriendHandler(
+	userRepository *repository.UserRepository,
+	friendRepository *repository.FriendRepository,
+) (*FriendHandler, error) {
 	return &FriendHandler{
-		userRepository: userRepository,
+		userRepository:   userRepository,
+		friendRepository: friendRepository,
 	}, nil
 }
 
@@ -26,40 +31,39 @@ func (h FriendHandler) GetFriends(c echo.Context) error {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
-	friends, err := h.userRepository.GetFriends(c.Request().Context(), uint64(id))
+	friends, err := h.friendRepository.GetFriends(c.Request().Context(), uint64(id))
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 
-	if len(friends) == 0 {
-		friends = make([]entity.Friend, 0)
-	}
-
-	requestFriends, err := h.userRepository.GetRequestFriends(c.Request().Context(), uint64(id))
+	applyings, err := h.friendRepository.GetApplyings(c.Request().Context(), uint64(id))
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 
-	if len(requestFriends) == 0 {
-		requestFriends = make([]entity.Friend, 0)
+	applyeds, err := h.friendRepository.GetApplieds(c.Request().Context(), uint64(id))
+	if err != nil {
+		fmt.Println(err)
+		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"friends":         friends,
-		"request_friends": requestFriends,
+		"friends":   friends,
+		"applyings": applyings,
+		"applyeds":  applyeds,
 	})
 }
 
-func (h FriendHandler) BlockFriend(c echo.Context) error {
+func (h FriendHandler) Blind(c echo.Context) error {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
 	friendUserIDStr := c.Param("friend_user_id")
 	friendUserID, _ := strconv.Atoi(friendUserIDStr)
 
-	err := h.userRepository.BlockFriend(context.Background(), uint64(id), uint64(friendUserID))
+	err := h.friendRepository.Blind(context.Background(), uint64(id), uint64(friendUserID))
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -67,14 +71,14 @@ func (h FriendHandler) BlockFriend(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
-func (h FriendHandler) ApplyFriend(c echo.Context) error {
+func (h FriendHandler) Apply(c echo.Context) error {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
 	friendUserIDStr := c.Param("friend_user_id")
 	friendUserID, _ := strconv.Atoi(friendUserIDStr)
 
-	err := h.userRepository.ApplyFriend(context.Background(), uint64(id), uint64(friendUserID))
+	err := h.friendRepository.Apply(context.Background(), uint64(id), uint64(friendUserID))
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -82,14 +86,14 @@ func (h FriendHandler) ApplyFriend(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
-func (h FriendHandler) AcceptApplyFriend(c echo.Context) error {
+func (h FriendHandler) AcceptApply(c echo.Context) error {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
 	friendUserIDStr := c.Param("friend_user_id")
 	friendUserID, _ := strconv.Atoi(friendUserIDStr)
 
-	err := h.userRepository.AcceptApplyFriend(context.Background(), uint64(id), uint64(friendUserID))
+	err := h.friendRepository.AcceptApply(context.Background(), uint64(id), uint64(friendUserID))
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -102,7 +106,7 @@ func (h FriendHandler) GetRecommendUsers(c echo.Context) error {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
-	users, err := h.userRepository.GetRecommendUsers(c.Request().Context(), uint64(id))
+	users, err := h.friendRepository.GetRecommendUsers(c.Request().Context(), uint64(id))
 	if err != nil {
 		fmt.Println(err)
 		return err

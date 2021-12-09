@@ -57,6 +57,7 @@ func main() {
 	jwtMiddleware := middleware.JWTWithConfig(config)
 
 	userRepository := repository.NewUserRepository(sqlHandler)
+	friendRepository := repository.NewFriendRepository(sqlHandler)
 	eventRepository := repository.NewEventRepository(sqlHandler)
 
 	twitterAuthService := &service.TwitterAuthService{}
@@ -64,7 +65,7 @@ func main() {
 	createUserUsecase, _ := usecase.NewCreatUserUsercase(twitterAuthService, userService, userRepository)
 
 	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository, createUserUsecase)
-	friendHandler, _ := handler.NewFriendHandler(userRepository)
+	friendHandler, _ := handler.NewFriendHandler(userRepository, friendRepository)
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
 	twitterHandler, _ := handler.NewTwitterHandler()
 	devHandler, _ := handler.NewDevHandler(*userRepository)
@@ -101,9 +102,9 @@ func main() {
 	{
 		friendAPI.GET("", friendHandler.GetFriends, jwtMiddleware)
 		friendAPI.GET("/recommended", friendHandler.GetRecommendUsers, jwtMiddleware)
-		friendAPI.POST("/:friend_user_id/apply", friendHandler.ApplyFriend, jwtMiddleware)
-		friendAPI.POST("/:friend_user_id/accept", friendHandler.AcceptApplyFriend, jwtMiddleware)
-		friendAPI.POST("/:friend_user_id/block", friendHandler.BlockFriend, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/apply", friendHandler.Apply, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/accept", friendHandler.AcceptApply, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/blind", friendHandler.Blind, jwtMiddleware)
 	}
 
 	e.GET("/api/twitter/request_token", twitterHandler.FetchRequestToken)

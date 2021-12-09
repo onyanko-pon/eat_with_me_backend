@@ -130,7 +130,11 @@ func (r EventRepository) GetEventsRelatedToUser(ctx context.Context, user entity
 	JOIN users as organize_user ON organize_user.id = events.organize_user_id
 	WHERE
 		events.start_datetime > $2 and (
-			events.organize_user_id IN (SELECT friend_user_id FROM friends WHERE friends.user_id = $1 and friends.status = 'accepted')
+			events.organize_user_id IN (
+				SELECT user_relations.friend_user_id
+				FROM user_relations
+				WHERE user_relations.user_id = $1 and user_relations.blinded = FALSE
+			)
 			OR events.organize_user_id = $3
 		)
 	`
