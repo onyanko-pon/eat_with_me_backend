@@ -105,6 +105,7 @@ func main() {
 		friendAPI.POST("/:friend_user_id/apply", friendHandler.Apply, jwtMiddleware)
 		friendAPI.POST("/:friend_user_id/accept", friendHandler.AcceptApply, jwtMiddleware)
 		friendAPI.POST("/:friend_user_id/blind", friendHandler.Blind, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/decline", friendHandler.Decline, jwtMiddleware)
 	}
 
 	e.GET("/api/twitter/request_token", twitterHandler.FetchRequestToken)

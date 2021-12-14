@@ -180,6 +180,12 @@ func (u FriendRepository) AcceptApply(ctx context.Context, userID uint64, friend
 	return err
 }
 
+func (u FriendRepository) Decline(ctx context.Context, userID uint64, friendUserID uint64) error {
+	query := "DELETE FROM user_relations WHERE user_id = $1 AND friend_user_id = $2"
+	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
+	return err
+}
+
 // TODO トランザクション
 func (u FriendRepository) Blind(ctx context.Context, userID uint64, friendUserID uint64) error {
 	query := "UPDATE user_relations SET brainding = TRUE where user_id = $1 AND friend_user_id = $2;"

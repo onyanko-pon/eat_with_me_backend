@@ -101,6 +101,21 @@ func (h FriendHandler) AcceptApply(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+func (h FriendHandler) Decline(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	friendUserIDStr := c.Param("friend_user_id")
+	friendUserID, _ := strconv.Atoi(friendUserIDStr)
+
+	err := h.friendRepository.Decline(context.Background(), uint64(id), uint64(friendUserID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
 func (h FriendHandler) GetRecommendUsers(c echo.Context) error {
 
 	idStr := c.Param("id")
