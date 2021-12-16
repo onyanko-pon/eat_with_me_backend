@@ -188,13 +188,13 @@ func (u FriendRepository) Decline(ctx context.Context, userID uint64, friendUser
 
 // TODO トランザクション
 func (u FriendRepository) Blind(ctx context.Context, userID uint64, friendUserID uint64) error {
-	query := "UPDATE user_relations SET brainding = TRUE where user_id = $1 AND friend_user_id = $2;"
+	query := "UPDATE user_relations SET blinding = TRUE where user_id = $1 AND friend_user_id = $2;"
 	_, err := u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
 	if err != nil {
 		return err
 	}
 
-	query = "UPDATE user_relations SET brainded = TRUE where friend_user_id = $1 AND user_id = $2;"
+	query = "UPDATE user_relations SET blinded = TRUE where friend_user_id = $1 AND user_id = $2;"
 	_, err = u.sqlHandler.QueryContext(ctx, query, userID, friendUserID)
 	return err
 }
