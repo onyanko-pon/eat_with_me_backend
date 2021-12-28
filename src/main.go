@@ -11,7 +11,9 @@ import (
 	"github.com/onyanko-pon/eat_with_me_backend/src/auth"
 	"github.com/onyanko-pon/eat_with_me_backend/src/handler"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
+	"github.com/onyanko-pon/eat_with_me_backend/src/service"
 	"github.com/onyanko-pon/eat_with_me_backend/src/sql_handler"
+	"github.com/onyanko-pon/eat_with_me_backend/src/usecase"
 )
 
 func main() {
@@ -55,42 +57,62 @@ func main() {
 	jwtMiddleware := middleware.JWTWithConfig(config)
 
 	userRepository := repository.NewUserRepository(sqlHandler)
+	friendRepository := repository.NewFriendRepository(sqlHandler)
 	eventRepository := repository.NewEventRepository(sqlHandler)
+
+	twitterAuthService := &service.TwitterAuthService{}
+	userService, _ := service.NewUserService(*userRepository)
+	createUserUsecase, _ := usecase.NewCreatUserUsercase(twitterAuthService, userService, userRepository)
+
+	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository, createUserUsecase)
+	friendHandler, _ := handler.NewFriendHandler(userRepository, friendRepository)
+	eventHandler, _ := handler.NewEventHandler(eventRepository)
+	twitterHandler, _ := handler.NewTwitterHandler()
+	devHandler, _ := handler.NewDevHandler(*userRepository)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository)
-	eventHandler, _ := handler.NewEventHandler(eventRepository)
-	twitterHandler, _ := handler.NewTwitterHandler()
+	userAPI := e.Group("/api/users")
+	{
+		// TODO 多分これidが必要
+		userAPI.PUT("", userHandler.UpdateUser, jwtMiddleware)
+		userAPI.GET("/:id", userHandler.GetUser, jwtMiddleware)
+		userAPI.GET("/:username/by_username", userHandler.FetchUserByUsername, jwtMiddleware)
+		userAPI.POST("/:id/usericons", userHandler.UploadUserIcon, jwtMiddleware)
+		userAPI.POST("/twitter_verify", userHandler.CreateUserWithTwitterVerify)
+	}
 
-	e.GET("/api/users/:id/friends", userHandler.GetFriends, jwtMiddleware)
-	e.GET("/api/users/:id/recommend_friends", userHandler.GetRecommendUsers, jwtMiddleware)
-	e.POST("/api/users", userHandler.CreateUser)
-	e.PUT("/api/users", userHandler.UpdateUser, jwtMiddleware)
-	e.GET("/api/users/:id", userHandler.GetUser, jwtMiddleware)
-	e.GET("/api/users/:username/by_username", userHandler.FetchUserByUsername, jwtMiddleware)
+	eventAPI := e.Group("/api/events")
+	{
+		eventAPI.POST("", eventHandler.CreateEvent, jwtMiddleware)
+		eventAPI.PUT("", eventHandler.UpdateEvent, jwtMiddleware)
+		eventAPI.GET("/:id", eventHandler.GetEvent, jwtMiddleware)
+	}
 
-	e.POST("/api/events", eventHandler.CreateEvent, jwtMiddleware)
-	e.PUT("/api/events", eventHandler.UpdateEvent, jwtMiddleware)
-	e.GET("/api/events/:id", eventHandler.GetEvent, jwtMiddleware)
+	userEventAPI := e.Group("/api/users/:id/events")
+	{
+		userEventAPI.GET("", userHandler.GetEvents, jwtMiddleware)
+		userEventAPI.GET("/joining", eventHandler.GetJoiningEvents, jwtMiddleware)
+		userEventAPI.POST("/:event_id/join", eventHandler.JoinEvent, jwtMiddleware)
+	}
 
-	e.GET("/api/users/:id/events", userHandler.GetEvents, jwtMiddleware)
-	e.GET("/api/users/:id/events/joining", eventHandler.GetJoiningEvents, jwtMiddleware)
-	e.POST("/api/events/:id/join", eventHandler.JoinEvent, jwtMiddleware)
-
-	e.POST("/api/users/:id/usericons", userHandler.UploadUserIcon, jwtMiddleware)
-
-	e.GET("/api/restricted", userHandler.Restricted, jwtMiddleware)
-	e.GET("/api/users/:id/token", userHandler.GenToken)
-
-	e.POST("/api/users/:id/apply/:friend_user_id", userHandler.ApplyFriend, jwtMiddleware)
-	e.POST("/api/users/:id/accept/:friend_user_id", userHandler.AcceptApplyFriend, jwtMiddleware)
-	e.POST("/api/users/:id/block/:friend_user_id", userHandler.BlockFriend, jwtMiddleware)
+	friendAPI := e.Group("/api/users/:id/friends")
+	{
+		friendAPI.GET("", friendHandler.GetFriends, jwtMiddleware)
+		friendAPI.GET("/recommended", friendHandler.GetRecommendUsers, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/apply", friendHandler.Apply, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/accept", friendHandler.AcceptApply, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/blind", friendHandler.Blind, jwtMiddleware)
+		friendAPI.POST("/:friend_user_id/decline", friendHandler.Decline, jwtMiddleware)
+	}
 
 	e.GET("/api/twitter/request_token", twitterHandler.FetchRequestToken)
-	e.POST("/api/users/twitter_verify", userHandler.CreateUserWithTwitterVerify)
+
+	// TODO Devlop用
+	e.GET("/api/restricted", devHandler.Restricted, jwtMiddleware)
+	e.GET("/api/users/:id/token", devHandler.GenToken)
 
 	e.Logger.Fatal(
 		e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))),
