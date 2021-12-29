@@ -6,3 +6,5 @@ CREATE TABLE users (
   twitter_username varchar(255) NOT NULL DEFAULT '',
   twitter_user_id bigint DEFAULT 0
 );
+
+ALTER TABLE users ADD COLUMN apple_user_identifier varchar(512);

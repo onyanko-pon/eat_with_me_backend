@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/onyanko-pon/eat_with_me_backend/src/entity"
 	"github.com/onyanko-pon/eat_with_me_backend/src/repository"
@@ -51,6 +52,36 @@ func (usecase CreateUserUsecase) CreateUserWithTwitterVerify(ctx context.Context
 		TwitterScreenName: twitterUser.ScreenName,
 		TwitterUsername:   twitterUser.Name,
 		TwitterUserID:     twitterUser.ID,
+	}
+
+	user, err = usecase.userRepository.CreateUser(ctx, *user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (usecase CreateUserUsecase) CreateUserWithAppleVerify(ctx context.Context, user_identifier string) (*entity.User, error) {
+
+	exists, user := usecase.userService.ExistsByAppleUserIdentifier(ctx, user_identifier)
+	if exists {
+		return user, nil
+	}
+
+	username := fmt.Sprintf("username_%04d", user.ID)
+	username, err := usecase.userService.GenUniqueUsername(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	user = &entity.User{
+		ID:                  0,
+		Username:            username,
+		ImageURL:            "", // base url
+		TwitterScreenName:   "",
+		TwitterUsername:     "",
+		TwitterUserID:       0,
+		AppleUserIdentifier: user_identifier,
 	}
 
 	user, err = usecase.userRepository.CreateUser(ctx, *user)

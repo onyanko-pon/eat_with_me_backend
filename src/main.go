@@ -81,7 +81,9 @@ func main() {
 		userAPI.GET("/:id", userHandler.GetUser, jwtMiddleware)
 		userAPI.GET("/:username/by_username", userHandler.FetchUserByUsername, jwtMiddleware)
 		userAPI.POST("/:id/usericons", userHandler.UploadUserIcon, jwtMiddleware)
+
 		userAPI.POST("/twitter_verify", userHandler.CreateUserWithTwitterVerify)
+		userAPI.POST("/apple_verify", userHandler.CreateUserWithTwitterVerify)
 	}
 
 	eventAPI := e.Group("/api/events")

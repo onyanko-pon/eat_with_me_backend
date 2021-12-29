@@ -22,6 +22,11 @@ func (service UserService) ExistsByTwitterUserID(ctx context.Context, twitterUse
 	return user != nil, user
 }
 
+func (service UserService) ExistsByAppleUserIdentifier(ctx context.Context, user_identifier string) (bool, *entity.User) {
+	user, _ := service.userRepository.FetchUserByAppleUserIdentifier(ctx, user_identifier)
+	return user != nil, user
+}
+
 func (service UserService) GenUniqueUsername(ctx context.Context, username string) (string, error) {
 	for {
 		user, _ := service.userRepository.FetchUserByUsername(ctx, username)

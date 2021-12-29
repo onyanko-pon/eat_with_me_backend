@@ -182,3 +182,29 @@ func (h UserHandler) CreateUserWithTwitterVerify(c echo.Context) error {
 		"token": jwtToken,
 	})
 }
+
+type reqCreateUserWithAppleVerify struct {
+	UserIdentifier string `json:"user_identifier"`
+}
+
+func (h UserHandler) CreateUserWithAppleVerify(c echo.Context) error {
+
+	requestBody := new(reqCreateUserWithAppleVerify)
+	if err := c.Bind(requestBody); err != nil {
+		return err
+	}
+
+	user, err := h.createUserUsecase.CreateUserWithTwitterVerify(c.Request().Context(), requestBody.OAuthToken, requestBody.OAuthSecret, requestBody.OAuthVerifier)
+	if err != nil {
+		return err
+	}
+	authUser := &auth.AuthUser{
+		UserID: strconv.Itoa(int(user.ID)),
+	}
+	jwtToken, _ := authUser.GenToken()
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"user":  *user,
+		"token": jwtToken,
+	})
+}
