@@ -194,7 +194,7 @@ func (h UserHandler) CreateUserWithAppleVerify(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.createUserUsecase.CreateUserWithTwitterVerify(c.Request().Context(), requestBody.OAuthToken, requestBody.OAuthSecret, requestBody.OAuthVerifier)
+	user, err := h.createUserUsecase.CreateUserWithAppleVerify(c.Request().Context(), requestBody.UserIdentifier)
 	if err != nil {
 		return err
 	}

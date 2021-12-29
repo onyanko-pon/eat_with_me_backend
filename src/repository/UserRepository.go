@@ -26,7 +26,7 @@ func (u UserRepository) GetUser(ctx context.Context, userID uint64) (*entity.Use
 	}
 	var user entity.User
 	rows.Next()
-	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID, &user.AppleUserIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (u UserRepository) FetchUserByUsername(ctx context.Context, username string
 	}
 	var user entity.User
 	rows.Next()
-	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID, &user.AppleUserIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (u UserRepository) FetchUserByTwitterUserID(ctx context.Context, twitterUse
 	}
 	var user entity.User
 	rows.Next()
-	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID, &user.AppleUserIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (u UserRepository) FetchUserByAppleUserIdentifier(ctx context.Context, appl
 	}
 	var user entity.User
 	rows.Next()
-	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+	err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID, &user.AppleUserIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -86,9 +86,9 @@ func (u UserRepository) FetchUserByAppleUserIdentifier(ctx context.Context, appl
 }
 
 func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*entity.User, error) {
-	query := `INSERT INTO users (username, image_url, twitter_screen_name, twitter_username, twitter_user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`
+	query := `INSERT INTO users (username, image_url, twitter_screen_name, twitter_username, twitter_user_id, apple_user_identifier) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	rows, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL, user.TwitterScreenName, user.TwitterUsername, user.TwitterUserID)
+	rows, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL, user.TwitterScreenName, user.TwitterUsername, user.TwitterUserID, user.AppleUserIdentifier)
 
 	var id uint64
 	rows.Next()
@@ -104,9 +104,17 @@ func (u UserRepository) CreateUser(ctx context.Context, user entity.User) (*enti
 }
 
 func (u UserRepository) UpdateUser(ctx context.Context, user entity.User) (*entity.User, error) {
-	query := `UPDATE users SET username = $1, image_url = $2 WHERE id = $3`
+	query := `UPDATE users SET
+		username = $1, image_url = $2
+		twitter_screen_name = $3, twitter_user_id = $4
+		twitter_username = $5, AppleUserIdentifier = $6
+		WHERE id = $7`
 
-	_, err := u.sqlHandler.QueryContext(ctx, query, user.Username, user.ImageURL, user.ID)
+	_, err := u.sqlHandler.QueryContext(ctx, query,
+		user.Username, user.ImageURL, user.TwitterScreenName,
+		user.TwitterUserID, user.TwitterUsername, user.AppleUserIdentifier,
+		user.ID,
+	)
 
 	if err != nil {
 		return nil, err
@@ -128,7 +136,7 @@ func (u UserRepository) GetJoiningUsers(ctx context.Context, eventID uint64) ([]
 	var users []entity.User
 	for rows.Next() {
 		var user entity.User
-		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID)
+		err = rows.Scan(&user.ID, &user.Username, &user.ImageURL, &user.TwitterScreenName, &user.TwitterUsername, &user.TwitterUserID, &user.AppleUserIdentifier)
 		users = append(users, user)
 		if err != nil {
 			return nil, err

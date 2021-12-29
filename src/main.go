@@ -83,7 +83,7 @@ func main() {
 		userAPI.POST("/:id/usericons", userHandler.UploadUserIcon, jwtMiddleware)
 
 		userAPI.POST("/twitter_verify", userHandler.CreateUserWithTwitterVerify)
-		userAPI.POST("/apple_verify", userHandler.CreateUserWithTwitterVerify)
+		userAPI.POST("/apple_verify", userHandler.CreateUserWithAppleVerify)
 	}
 
 	eventAPI := e.Group("/api/events")
