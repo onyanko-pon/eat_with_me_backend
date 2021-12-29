@@ -64,7 +64,7 @@ func main() {
 	userService, _ := service.NewUserService(*userRepository)
 	createUserUsecase, _ := usecase.NewCreatUserUsercase(twitterAuthService, userService, userRepository)
 
-	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository, createUserUsecase)
+	userHandler, _ := handler.NewUserHandler(userRepository, eventRepository, userService, twitterAuthService, createUserUsecase)
 	friendHandler, _ := handler.NewFriendHandler(userRepository, friendRepository)
 	eventHandler, _ := handler.NewEventHandler(eventRepository)
 	twitterHandler, _ := handler.NewTwitterHandler()
@@ -84,6 +84,7 @@ func main() {
 
 		userAPI.POST("/twitter_verify", userHandler.CreateUserWithTwitterVerify)
 		userAPI.POST("/apple_verify", userHandler.CreateUserWithAppleVerify)
+		userAPI.POST("/:id/twitter_connect", userHandler.ConnectTwitter)
 	}
 
 	eventAPI := e.Group("/api/events")

@@ -16,19 +16,29 @@ import (
 )
 
 type UserHandler struct {
-	UserRepository    *repository.UserRepository
-	EventRepository   *repository.EventRepository
-	FileService       *service.FileService
-	createUserUsecase *usecase.CreateUserUsecase
+	UserRepository     *repository.UserRepository
+	EventRepository    *repository.EventRepository
+	FileService        *service.FileService
+	userService        *service.UserService
+	twitterAuthService *service.TwitterAuthService
+	createUserUsecase  *usecase.CreateUserUsecase
 }
 
-func NewUserHandler(userRepository *repository.UserRepository, eventRepository *repository.EventRepository, createUserUsecase *usecase.CreateUserUsecase) (*UserHandler, error) {
+func NewUserHandler(
+	userRepository *repository.UserRepository,
+	eventRepository *repository.EventRepository,
+	userService *service.UserService,
+	twitterAuthService *service.TwitterAuthService,
+	createUserUsecase *usecase.CreateUserUsecase) (*UserHandler, error) {
+
 	fileService, _ := service.NewFileService()
 	return &UserHandler{
-		UserRepository:    userRepository,
-		EventRepository:   eventRepository,
-		FileService:       fileService,
-		createUserUsecase: createUserUsecase,
+		UserRepository:     userRepository,
+		EventRepository:    eventRepository,
+		FileService:        fileService,
+		userService:        userService,
+		twitterAuthService: twitterAuthService,
+		createUserUsecase:  createUserUsecase,
 	}, nil
 }
 
@@ -205,6 +215,57 @@ func (h UserHandler) CreateUserWithAppleVerify(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"user":  *user,
+		"token": jwtToken,
+	})
+}
+
+func (h UserHandler) ConnectTwitter(c echo.Context) error {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	requestBody := new(reqCreateUserWithTwitterVerify)
+	if err := c.Bind(requestBody); err != nil {
+		return err
+	}
+
+	accessToken, accessSecret, _ := h.twitterAuthService.GenAccessToken(requestBody.OAuthToken, requestBody.OAuthSecret, requestBody.OAuthVerifier)
+
+	twitterUser, err := h.twitterAuthService.VerifyUser(accessToken, accessSecret)
+	if err != nil {
+		return err
+	}
+
+	// そのTwitterアカウントで既に登録されていないことを確認
+	exists, _ := h.userService.ExistsByTwitterUserID(c.Request().Context(), int(twitterUser.ID))
+	if exists {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "user already connected to Twitter.",
+		})
+	}
+
+	username, _ := h.userService.GenUniqueUsername(c.Request().Context(), twitterUser.ScreenName)
+	user, _ := h.UserRepository.GetUser(c.Request().Context(), uint64(id))
+
+	user.Username = username
+	user.ImageURL = twitterUser.ProfileImageUrlHttps
+	user.TwitterScreenName = twitterUser.ScreenName
+	user.TwitterUsername = twitterUser.Name
+	user.TwitterUserID = twitterUser.ID
+
+	user, err = h.UserRepository.UpdateUser(c.Request().Context(), *user)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": fmt.Sprintf("Error %s", err.Error()),
+		})
+	}
+	authUser := &auth.AuthUser{
+		UserID: strconv.Itoa(int(user.ID)),
+	}
+	jwtToken, _ := authUser.GenToken()
+
+	return c.JSON(http.StatusInternalServerError, echo.Map{
+		"user":  user,
 		"token": jwtToken,
 	})
 }
